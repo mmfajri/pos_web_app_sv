@@ -3,38 +3,54 @@ import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
-import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { svelteParser } from 'svelte-eslint-parser';
 
+// Resolve absolute path to tsconfig.json
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const tsconfigPath = join(__dirname, 'tsconfig.json');
+
+// Resolve .gitignore
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 export default ts.config(
-	includeIgnoreFile(gitignorePath),
-	js.configs.recommended,
-	...ts.configs.recommended,
-	...svelte.configs.recommended,
-	prettier,
-	...svelte.configs.prettier,
-	{
-		languageOptions: {
-			globals: { ...globals.browser, ...globals.node }
-		},
-		rules: {
-			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
-			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
-			'no-undef': 'off'
-		}
-	},
-	{
-		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
-		languageOptions: {
-			parserOptions: {
-				projectService: true,
-				extraFileExtensions: ['.svelte'],
-				parser: ts.parser,
-				svelteConfig
-			}
-		}
-	}
+  includeIgnoreFile(gitignorePath),
+
+  // Base JS rules
+  js.configs.recommended,
+  ...ts.configs.recommended,
+
+  // Svelte rules
+  ...svelte.configs.recommended,
+  ...svelte.configs.prettier, // disables conflicting rules with Prettier
+
+  // Prettier base config
+  prettier,
+
+  // Common settings
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    rules: {
+      'no-undef': 'off'
+    }
+  },
+
+  // Svelte-specific overrides for proper parsing and typechecking
+  {
+    files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+    languageOptions: {
+parser: svelteParser,
+      parserOptions: {
+        project: tsconfigPath,
+        extraFileExtensions: ['.svelte']
+      }
+    }
+  }
 );
