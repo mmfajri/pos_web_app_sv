@@ -29,10 +29,11 @@ export default ts.config(
 	{
 		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
 		languageOptions: {
+			parser: 'svelte-eslint-parser',
 			parserOptions: {
 				projectService: true,
 				allowDefaultProject: true,
-				// extraFileExtensions: ['.svelte'],
+				extraFileExtensions: ['.svelte'],
 				// parser: ts.parser,
 				// svelteConfig
 			}
