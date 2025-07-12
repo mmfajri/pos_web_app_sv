@@ -1,6 +1,6 @@
 {
 	"svelteStrictMode": false,
-	"printWidth": 100,
+	"printWidth": 120,
 	"svelteSortOrder": "scripts-markup-styles",
 	"svelteBracketNewLine": true,
 	"htmlWhitespaceSensitivity": "ignore",

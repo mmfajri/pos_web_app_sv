@@ -1,9 +1,14 @@
-<h1 class="text-3xl font-bold underline">TEST !!!</h1>
+<script lang="ts">
+  import Navbar from "$lib/components/Navbar.svelte";
+  import { goto } from "$app/navigation";
 
-<style lang="postcss">
-	@reference "tailwindcss";
+  function logout() {
+    console.log("Logging out...");
+    goto("/login");
+  }
+</script>
 
-	:global(html) {
-		background-color: theme(--color-gray-100);
-	}
-</style>
+<Navbar onLogout={logout}></Navbar>
+<main class="p-8">
+  <h1 class="text-3xl font-bold underline">TEST !!!</h1>
+</main>
