@@ -9,7 +9,8 @@
     <!-- LINKS -->
     <div class="space-x-6 hiddent md:flex">
       <a href="/dashboard" class="text-gray-700 hover:text-blue-600 font-medium">Dashboard</a>
-      <a href="/product" class="text-gray-700 hover:text-blue-600 font-medium">Product</a>
+      <a href="/invoice" class="text-gray-700 hover:text-blue-600 font-medium">Invoice</a>
+      <a href="/product" class="text-gray-700 hover:text-blue-600 font-medium">Product Management</a>
       <a href="/transaction-history" class="text-gray-700 hover:text-blue-600 font-medium">Transaction History</a>
       <!-- LOGOUT -->
       <div class="flex items-center">
