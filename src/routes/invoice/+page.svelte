@@ -2,11 +2,30 @@
   import Navbar from "$lib/components/Navbar.svelte";
   import { logout } from "$lib/utils/logout";
   import { SvelteDate } from "svelte/reactivity";
-  import { TransactionItem } from "$lib/models/TransactionItem";
+  import type { TransactionItem } from "$lib/models/TransactionItems";
+  import type { Product } from "$lib/models/Product";
+  import { TransactionController } from "$lib/controllers/TransactionController";
 
   let invoiceDate = new SvelteDate();
 
-  let items = $state(new TransactionItem{})
+  const products: Product[] = [
+    { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
+    { code: "B456", description: "Pen", price: 0.99, category: "PENS", product_name: "2B Exam Pencil" },
+  ];
+
+  const transactionController = new TransactionController(products);
+
+  let items = transactionController.getItem();
+  let codeInput: string = "";
+
+  function handleAdd() {
+    if (transactionController.addItemByCode(codeInput)) {
+      codeInput = "";
+      items = transactionController.getItem();
+    } else {
+      alert("Product code not found");
+    }
+  }
 </script>
 
 <Navbar onLogout={logout}></Navbar>
@@ -27,25 +46,23 @@
     <table class="min-w-full text-sm">
       <thead class="bg-gray-100 sticky top-0">
         <tr>
-          <th class="border px-2 py-1 text-left">Dept</th>
-          <th class="border px-2 py-1 text-left">Catg</th>
+          <th class="border px-2 py-1 text-left">Product Name</th>
+          <th class="border px-2 py-1 text-left">Category</th>
           <th class="border px-2 py-1 text-left">Description</th>
           <th class="border px-2 py-1 text-right">Qty</th>
           <th class="border px-2 py-1 text-right">Price</th>
           <th class="border px-2 py-1 text-right">Amount</th>
-          <th class="border px-2 py-1 text-center">T</th>
         </tr>
       </thead>
       <tbody>
         {#each items as item}
           <tr>
-            <td class="border px-2 py-1">{item.dept}</td>
+            <td class="border px-2 py-1">{item}</td>
             <td class="border px-2 py-1">{item.catg}</td>
             <td class="border px-2 py-1">{item.desc}</td>
             <td class="border px-2 py-1 text-right">{item.qty}</td>
             <td class="border px-2 py-1 text-right">${item.price.toFixed(2)}</td>
             <td class="border px-2 py-1 text-right">${item.amount.toFixed(2)}</td>
-            <td class="border px-2 py-1 text-center">{item.t}</td>
           </tr>
         {/each}
       </tbody>
