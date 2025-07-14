@@ -26,6 +26,13 @@
       alert("Product code not found");
     }
   }
+
+  function updateQty(index: number, qty: number) {
+    transactionController.updateQuantity(index, qty);
+    items = transactionController.getItem();
+  }
+
+  $: subtotal = transactionController.getSubTotal().toFixed(2);
 </script>
 
 <Navbar onLogout={logout}></Navbar>
@@ -58,9 +65,9 @@
         {#each items as item}
           <tr>
             <td class="border px-2 py-1">{item}</td>
-            <td class="border px-2 py-1">{item.catg}</td>
-            <td class="border px-2 py-1">{item.desc}</td>
-            <td class="border px-2 py-1 text-right">{item.qty}</td>
+            <td class="border px-2 py-1">{item.code}</td>
+            <td class="border px-2 py-1">{item.description}</td>
+            <td class="border px-2 py-1 text-right">{item.quantity}</td>
             <td class="border px-2 py-1 text-right">${item.price.toFixed(2)}</td>
             <td class="border px-2 py-1 text-right">${item.amount.toFixed(2)}</td>
           </tr>
