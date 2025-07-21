@@ -8,6 +8,7 @@
   import { onMount } from "svelte";
 
   let invoiceDate = new SvelteDate();
+  let subtotal: string = "0";
 
   const products: Product[] = [
     { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
@@ -43,7 +44,10 @@
   //  transactionController.load
   // })
 
-  $: subtotal = transactionController.getSubTotal().toFixed(2);
+  // $: subtotal = transactionController.getSubTotal().toFixed(2);
+  $: if (items) {
+    subtotal = transactionController.getSubTotal().toFixed(2);
+  }
 </script>
 
 <Navbar onLogout={logout}></Navbar>
