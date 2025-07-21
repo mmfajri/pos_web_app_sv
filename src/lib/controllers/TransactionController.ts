@@ -5,8 +5,14 @@ export class TransactionController {
 	private productDb: Product[];
 	private item: TransactionItem[] = [];
 
-	constructor(productDb: Product[]) {
+	// constructor(productDb: Product[]) {
+	// 	this.productDb = productDb;
+	// }
+
+	constructor(productDb: Product[], transactionitem: TransactionItem[]) {
 		this.productDb = productDb;
+		this.item = transactionitem;
+
 	}
 
 	getItem(): TransactionItem[] {

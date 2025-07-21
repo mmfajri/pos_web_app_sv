@@ -1,24 +1,23 @@
 <script lang="ts">
   import Navbar from "$lib/components/Navbar.svelte";
   import { logout } from "$lib/utils/logout";
-  import { SvelteDate } from "svelte/reactivity";
-  import type { TransactionItem } from "$lib/models/TransactionItems";
   import type { Product } from "$lib/models/Product";
   import { TransactionController } from "$lib/controllers/TransactionController";
-  import { onMount } from "svelte";
+  import type { TransactionItem } from "$lib/models/TransactionItems";
+  // import { onMount } from "svelte";
 
-  let invoiceDate = new SvelteDate();
-  let subtotal: string = "0";
+  let invoiceDate = $state(new Date());
+  let codeInput: string = $state("");
 
   const products: Product[] = [
     { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
     { code: "B456", description: "Pen", price: 0.99, category: "PENS", product_name: "2B Exam Pencil" },
   ];
 
-  const transactionController = new TransactionController(products);
+  let items = $state<TransactionItem[]>([]);
+  const transactionController = new TransactionController(products, items);
 
-  let items = transactionController.getItem();
-  let codeInput: string = "";
+  const subtotal = $derived(() => transactionController.getSubTotal().toFixed(2));
 
   function handleAdd() {
     if (transactionController.addItemByCode(codeInput)) {
@@ -39,15 +38,11 @@
     items = transactionController.getItem();
   }
 
-  // Sync to localStorage
+  // Future improvement
   // onMount(() => {
-  //  transactionController.load
+  //   transactionController.loadFromLocalStorage();
   // })
-
-  // $: subtotal = transactionController.getSubTotal().toFixed(2);
-  $: if (items) {
-    subtotal = transactionController.getSubTotal().toFixed(2);
-  }
+  $inspect(subtotal());
 </script>
 
 <Navbar onLogout={logout}></Navbar>
@@ -67,11 +62,11 @@
     <input
       type="text"
       bind:value={codeInput}
-      on:keydown={(e) => e.key == "Enter" && handleAdd()}
+      onkeydown={(e) => e.key == "Enter" && handleAdd()}
       class="border px-2 py-1 rounded mr-2"
       placeholder="Enter Product Code"
     />
-    <button on:click={handleAdd} class="bg-blue-500 text-white px-3 py-1 rounded">Add Item</button>
+    <button onclick={handleAdd} class="bg-blue-500 text-white px-3 py-1 rounded">Add Item</button>
   </div>
 
   <!-- Table -->
@@ -98,14 +93,14 @@
                 class="w-16 text-right border px-1 rounded"
                 min="1"
                 bind:value={item.quantity}
-                on:change={() => updateQty(index, item.quantity)}
+                onchange={() => updateQty(index, item.quantity)}
               />
             </td>
             <td class="border px-2 py-1 text-right">${item.price.toFixed(2)}</td>
             <td class="border px-2 py-1 text-right">${item.amount.toFixed(2)}</td>
             <td class="border px-2 py-1 text-center">
               <button
-                on:click={() => removeItem(index)}
+                onclick={() => removeItem(index)}
                 class="text-red-600 font-semibold hover:underlined"
                 title="Remove"
               >
@@ -123,7 +118,7 @@
     <div class="text-sm space-y-1 text-right">
       <div>
         <span class="font-medium">Subtotal:</span>
-        <span class="ml-2">${subtotal}</span>
+        <span class="ml-2">${subtotal()}</span>
       </div>
       <div>
         <span class="font-medium">Misc:</span>
@@ -134,7 +129,7 @@
         <span class="ml-2">0%</span>
       </div>
       <div class="text-lg font-bold">
-        Total: <span class="ml-2">${subtotal}</span>
+        Total: <span class="ml-2">${subtotal()}</span>
       </div>
     </div>
   </div>
