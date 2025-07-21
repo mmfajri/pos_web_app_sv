@@ -1,6 +1,6 @@
 export type TransactionItem = {
 	code: string;
-	description?: string;
+	product_name?: string;
 	category?: string;
 	quantity: number;
 	price: number;

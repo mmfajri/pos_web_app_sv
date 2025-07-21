@@ -59,14 +59,24 @@
     </div>
   </div>
 
+  <div class="p-4">
+    <input
+      type="text"
+      bind:value={codeInput}
+      on:keydown={(e) => e.key == "Enter" && handleAdd()}
+      class="border px-2 py-1 rounded mr-2"
+      placeholder="Enter Product Code"
+    />
+    <button on:click={handleAdd} class="bg-blue-500 text-white px-3 py-1 rounded">Add Item</button>
+  </div>
+
   <!-- Table -->
   <div class="overflow-auto max-h-[400px]">
     <table class="min-w-full text-sm">
       <thead class="bg-gray-100 sticky top-0">
         <tr>
+          <th class="border px-2 py-1 text-left">Code</th>
           <th class="border px-2 py-1 text-left">Product Name</th>
-          <th class="border px-2 py-1 text-left">Category</th>
-          <th class="border px-2 py-1 text-left">Description</th>
           <th class="border px-2 py-1 text-right">Qty</th>
           <th class="border px-2 py-1 text-right">Price</th>
           <th class="border px-2 py-1 text-right">Amount</th>
@@ -76,9 +86,8 @@
       <tbody>
         {#each items as item, index}
           <tr>
-            <td class="border px-2 py-1">{item}</td>
             <td class="border px-2 py-1">{item.code}</td>
-            <td class="border px-2 py-1">{item.description}</td>
+            <td class="border px-2 py-1">{item.product_name}</td>
             <td class="border px-2 py-1 text-right">
               <input
                 type="number"
@@ -88,7 +97,6 @@
                 on:change={() => updateQty(index, item.quantity)}
               />
             </td>
-            <td class="border px-2 py-1 text-right">{item.quantity}</td>
             <td class="border px-2 py-1 text-right">${item.price.toFixed(2)}</td>
             <td class="border px-2 py-1 text-right">${item.amount.toFixed(2)}</td>
             <td class="border px-2 py-1 text-center">

@@ -1,6 +1,5 @@
 import type { Product } from "$lib/models/Product";
 import type { TransactionItem } from "$lib/models/TransactionItems";
-import { quintOut } from "svelte/easing";
 
 export class TransactionController {
 	private productDb: Product[];
@@ -21,7 +20,7 @@ export class TransactionController {
 
 		this.item.push({
 			code: product.code,
-			description: product.description,
+			product_name: product.product_name,
 			category: product.category,
 			quantity: 1,
 			price: product.price ?? 0,
