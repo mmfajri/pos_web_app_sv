@@ -1,13 +1,12 @@
 <script lang="ts">
-  import Navbar from "$lib/components/Navbar.svelte";
-  import { logout } from "$lib/utils/logout";
   import type { Product } from "$lib/models/Product";
-  import { TransactionController } from "$lib/controllers/TransactionController";
   import type { TransactionItem } from "$lib/models/TransactionItems";
-  // import { onMount } from "svelte";
+  import { logout } from "$lib/utils/logout";
+  import Navbar from "$lib/components/Navbar.svelte";
+  import { addItemByCode, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/TransactionController";
 
   let invoiceDate = $state(new Date());
-  let codeInput: string = $state("");
+  let codeInput = $state("");
 
   const products: Product[] = [
     { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
@@ -15,34 +14,26 @@
   ];
 
   let items = $state<TransactionItem[]>([]);
-  const transactionController = new TransactionController(products, items);
 
-  const subtotal = $derived(() => transactionController.getSubTotal().toFixed(2));
+  const subtotal = $derived(() => getSubtotal(items).toFixed(2));
 
   function handleAdd() {
-    if (transactionController.addItemByCode(codeInput)) {
+    const updated = addItemByCode(products, items, codeInput);
+    if (updated.length !== items.length) {
+      items = updated;
       codeInput = "";
-      items = transactionController.getItem();
     } else {
-      alert("Product code not found");
+      alert("Product Not Found");
     }
   }
 
-  function updateQty(index: number, qty: number) {
-    transactionController.updateQuantity(index, qty);
-    items = transactionController.getItem();
+  function handleQtyChange(index: number, qty: number) {
+    items = updateQuantity(items, index, qty);
   }
 
-  function removeItem(index: number) {
-    transactionController.removeItem(index);
-    items = transactionController.getItem();
+  function handleRemove(index: number) {
+    items = removeItem(items, index);
   }
-
-  // Future improvement
-  // onMount(() => {
-  //   transactionController.loadFromLocalStorage();
-  // })
-  $inspect(subtotal());
 </script>
 
 <Navbar onLogout={logout}></Navbar>
@@ -93,14 +84,14 @@
                 class="w-16 text-right border px-1 rounded"
                 min="1"
                 bind:value={item.quantity}
-                onchange={() => updateQty(index, item.quantity)}
+                onchange={() => handleQtyChange(index, item.quantity)}
               />
             </td>
             <td class="border px-2 py-1 text-right">${item.price.toFixed(2)}</td>
             <td class="border px-2 py-1 text-right">${item.amount.toFixed(2)}</td>
             <td class="border px-2 py-1 text-center">
               <button
-                onclick={() => removeItem(index)}
+                onclick={() => handleRemove(index)}
                 class="text-red-600 font-semibold hover:underlined"
                 title="Remove"
               >
