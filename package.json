@@ -24,6 +24,7 @@
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.11",
-		"tailwindcss": "^4.1.11"
+		"tailwindcss": "^4.1.11",
+		"w3-css": "^4.1.0"
 	}
 }

@@ -30,6 +30,10 @@
   let error: string | null = null;
   let loading: boolean = false;
 
+  function GoBack() {
+    goto("/login");
+  }
+
   async function handleRegister(event: Event): Promise<void> {
     event.preventDefault();
     error = null;
@@ -91,7 +95,26 @@
 <!-- The rest of your template remains the same -->
 <div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
   <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-md">
-    <h1 class="text-2xl font-bold mb-6 text-center">Register</h1>
+    <!-- Compact back link for mobile -->
+    <div class="mb-1">
+      <button
+        on:click={GoBack}
+        class="flex items-center text-gray-500 hover:text-gray-700 transition duration-150 text-xs md:text-sm"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-3 w-3 md:h-4 md:w-4 mr-1"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Login
+      </button>
+    </div>
+
+    <h1 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center">Register</h1>
 
     {#if error}
       <p class="text-red-500 text-sm mb-4">{error}</p>
