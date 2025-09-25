@@ -1,10 +1,12 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import PasswordInput from "$lib/components/PasswordInput.svelte";
 
   let username: string = "";
   let password: string = "";
   let error: string | null = null;
   let loading = false;
+  let showPassword: boolean = false;
 
   function handleLogin(event: Event) {
     event.preventDefault();
@@ -42,13 +44,7 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-        <input
-          type="password"
-          bind:value={password}
-          required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:border-blue-400"
-        />
+        <PasswordInput bind:value={password} bind:showPassword label="Password" id="password" />
       </div>
 
       <button
