@@ -1,8 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import PasswordInput from "$lib/components/PasswordInput.svelte";
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  import { API_ENDPOINTS, API_BASE_URL } from "$lib/utils/const_variable";
 
   // Interface for the form data
   interface RegisterData {
@@ -61,7 +60,7 @@
     };
 
     try {
-      const response: Response = await fetch(`${API_BASE_URL}/Auth/Register`, {
+      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/Register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
