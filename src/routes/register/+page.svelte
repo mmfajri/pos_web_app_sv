@@ -60,7 +60,7 @@
     };
 
     try {
-      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/Register`, {
+      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -3,6 +3,7 @@
   import { logout } from "$lib/utils/logout";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
+  import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
 
   // Product interface
   interface Product {
@@ -39,7 +40,7 @@
   }
 
   // Handle form submission
-  function handleSubmit(event: Event) {
+  async function handleSubmit(event: Event) {
     event.preventDefault();
 
     if (editingId !== null) {
@@ -55,6 +56,16 @@
         ...formData,
         id: Date.now(), // Simple ID generation
       };
+
+      // Setup Response Api for Created Product
+      const response: Response = await fetch(`$${API_BASE_URL}${API_ENDPOINTS.AUTH}/Register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newProduct),
+      });
+
       products = [...products, newProduct];
     }
 
