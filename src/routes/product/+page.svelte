@@ -14,6 +14,24 @@
     pricePerQty: number;
   }
 
+  interface ProductModel {
+    id?: number;
+    barcodeID: string;
+    title: string;
+    unit: string;
+    amount: number;
+  }
+
+  // Interface for the API response (adjust based on your API)
+  interface ApiResponse {
+    message?: string;
+    success?: boolean;
+    errors?: string[];
+    // Add other properties your API returns
+  }
+
+  let error: string | null = null;
+
   // Form data
   let formData: Product = {
     barcodeID: "",
@@ -52,25 +70,48 @@
       editingId = null;
     } else {
       // Add new product
+      const createProductModel: ProductModel = {
+        barcodeID: formData.barcodeID,
+        title: formData.title,
+        unit: formData.quantityType,
+        amount: formData.pricePerQty,
+      };
       const newProduct: Product = {
         ...formData,
-        id: Date.now(), // Simple ID generation
       };
 
-      // Setup Response Api for Created Product
-      const response: Response = await fetch(`$${API_BASE_URL}${API_ENDPOINTS.AUTH}/Register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newProduct),
-      });
+      try {
+        debugger;
+        // Setup Response Api for Created Product
+        const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(createProductModel),
+        });
 
-      products = [...products, newProduct];
+        const result: ApiResponse = await response.json();
+
+        if (response.ok) {
+          console.log("Add Product successful:", result);
+          products = [...products, newProduct];
+          saveProducts();
+          resetForm();
+        } else {
+          // Handle different types of error responses
+          error = result.message || result.errors?.join(", ") || `Add Product failed with status: ${response.status}`;
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          error = "Network error. Please check your connection and try again.";
+          console.error("Registration error:", err.message);
+        } else {
+          error = "An unexpected error occurred";
+          console.error("Unknown error:", err);
+        }
+      }
     }
-
-    saveProducts();
-    resetForm();
   }
 
   // Edit product
@@ -115,6 +156,10 @@
       <h2 class="text-2xl font-semibold mb-4">
         {editingId ? "Edit Product" : "Add New Product"}
       </h2>
+
+      {#if error}
+        <p class="text-red-500 text-sm mb-4">{error}</p>
+      {/if}
 
       <form on:submit={handleSubmit} class="space-y-4 bg-white p-6 rounded-lg shadow-md">
         <!-- Barcode ID -->
