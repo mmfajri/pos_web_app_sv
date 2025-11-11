@@ -4,6 +4,7 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
+  import type { ApiResponse } from "$lib/utils/ApiResponse";
 
   // Product interface
   interface Product {
@@ -22,15 +23,8 @@
     amount: number;
   }
 
-  // Interface for the API response (adjust based on your API)
-  interface ApiResponse {
-    message?: string;
-    success?: boolean;
-    errors?: string[];
-    // Add other properties your API returns
-  }
-
   let error: string | null = null;
+  let loading: boolean = false;
 
   // Form data
   let formData: Product = {
@@ -42,20 +36,39 @@
 
   // Product list
   let products: Product[] = [];
-  let editingId: number | null = null;
+  let editingId: number | null = null; // Fixed: use | instead of ||
 
-  // Load products from localStorage or API
-  onMount(() => {
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts) {
-      products = JSON.parse(savedProducts);
+  // Load products from API
+  async function fetchProducts(barcodeID?: string) {
+    // Fixed parameter syntax
+    loading = true;
+    try {
+      let url: string = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}`; // Fixed: use backticks and correct variable name
+      if (barcodeID) {
+        url += `?barcodeID=${encodeURIComponent(barcodeID)}`; // Fixed: added ? and fixed string interpolation
+      }
+      const response: Response = await fetch(url); // Fixed: use url variable, not string 'url'
+      if (response.ok) {
+        debugger;
+        const apiResponse: ApiResponse = await response.json();
+        products = apiResponse.data;
+        error = null;
+      } else {
+        error = `Failed to fetch products: ${response.status}`;
+        console.error("Failed to fetch products:", response.status);
+      }
+    } catch (err: unknown) {
+      error = "Network error. Please check your connection and try again.";
+      console.error("Fetch products error:", err);
+    } finally {
+      loading = false;
     }
-  });
-
-  // Save products to localStorage
-  function saveProducts() {
-    localStorage.setItem("products", JSON.stringify(products));
   }
+
+  // Load products on component mount
+  onMount(() => {
+    fetchProducts();
+  });
 
   // Handle form submission
   async function handleSubmit(event: Event) {
@@ -63,54 +76,94 @@
 
     if (editingId !== null) {
       // Update existing product
-      const index = products.findIndex((p) => p.id === editingId);
-      if (index !== -1) {
-        products[index] = { ...formData, id: editingId };
-      }
-      editingId = null;
+      await updateProduct();
     } else {
       // Add new product
-      const createProductModel: ProductModel = {
-        barcodeID: formData.barcodeID,
-        title: formData.title,
-        unit: formData.quantityType,
-        amount: formData.pricePerQty,
-      };
-      const newProduct: Product = {
-        ...formData,
-      };
+      await createProduct();
+    }
+  }
 
-      try {
-        debugger;
-        // Setup Response Api for Created Product
-        const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(createProductModel),
-        });
+  // Create new product
+  async function createProduct() {
+    const createProductModel: ProductModel = {
+      barcodeID: formData.barcodeID,
+      title: formData.title,
+      unit: formData.quantityType,
+      amount: formData.pricePerQty,
+    };
 
-        const result: ApiResponse = await response.json();
+    try {
+      loading = true;
+      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createProductModel),
+      });
 
-        if (response.ok) {
-          console.log("Add Product successful:", result);
-          products = [...products, newProduct];
-          saveProducts();
-          resetForm();
-        } else {
-          // Handle different types of error responses
-          error = result.message || result.errors?.join(", ") || `Add Product failed with status: ${response.status}`;
-        }
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          error = "Network error. Please check your connection and try again.";
-          console.error("Registration error:", err.message);
-        } else {
-          error = "An unexpected error occurred";
-          console.error("Unknown error:", err);
-        }
+      const result: ApiResponse = await response.json();
+
+      if (response.ok) {
+        console.log("Add Product successful:", result);
+        resetForm();
+        // Refresh the product list
+        await fetchProducts();
+      } else {
+        // error = result.message || result.errors?.join(", ") || `Add Product failed with status: ${response.status}`;
       }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        error = "Network error. Please check your connection and try again.";
+        console.error("Registration error:", err.message);
+      } else {
+        error = "An unexpected error occurred";
+        console.error("Unknown error:", err);
+      }
+    } finally {
+      loading = false;
+    }
+  }
+
+  // Update existing product
+  async function updateProduct() {
+    const updateProductModel: ProductModel = {
+      barcodeID: formData.barcodeID,
+      title: formData.title,
+      unit: formData.quantityType,
+      amount: formData.pricePerQty,
+    };
+
+    try {
+      loading = true;
+      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updateProductModel),
+      });
+
+      const result: ApiResponse = await response.json();
+
+      if (response.ok) {
+        console.log("Update Product successful:", result);
+        resetForm();
+        // Refresh the product list
+        await fetchProducts();
+      } else {
+        // error = result.message || result.errors?.join(", ") || `Update Product failed with status: ${response.status}`;
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        error = "Network error. Please check your connection and try again.";
+        console.error("Update error:", err.message);
+      } else {
+        error = "An unexpected error occurred";
+        console.error("Unknown error:", err);
+      }
+    } finally {
+      loading = false;
     }
   }
 
@@ -121,10 +174,28 @@
   }
 
   // Delete product
-  function deleteProduct(id: number) {
+  async function deleteProduct(id: number) {
     if (confirm("Are you sure you want to delete this product?")) {
-      products = products.filter((p) => p.id !== id);
-      saveProducts();
+      try {
+        loading = true;
+        const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Delete/${id}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          console.log("Delete Product successful");
+          // Refresh the product list
+          await fetchProducts();
+        } else {
+          error = `Delete Product failed with status: ${response.status}`;
+          console.error("Failed to delete product:", response.status);
+        }
+      } catch (err: unknown) {
+        error = "Network error. Please check your connection and try again.";
+        console.error("Delete error:", err);
+      } finally {
+        loading = false;
+      }
     }
   }
 
@@ -137,6 +208,7 @@
       pricePerQty: 0,
     };
     editingId = null;
+    error = null;
   }
 
   // Quantity type options
@@ -223,16 +295,22 @@
         <div class="flex gap-2 pt-4">
           <button
             type="submit"
-            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
+            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
-            {editingId ? "Update Product" : "Add Product"}
+            {#if loading}
+              Processing...
+            {:else}
+              {editingId ? "Update Product" : "Add Product"}
+            {/if}
           </button>
 
           {#if editingId}
             <button
               type="button"
               on:click={resetForm}
-              class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              disabled={loading}
+              class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
@@ -245,7 +323,9 @@
     <div class="flex-1">
       <h2 class="text-2xl font-semibold mb-4">Product List</h2>
 
-      {#if products.length === 0}
+      {#if loading && products.length === 0}
+        <div class="text-center py-8 text-gray-500">Loading products...</div>
+      {:else if products.length === 0}
         <div class="text-center py-8 text-gray-500">No products found. Add your first product!</div>
       {:else}
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
@@ -284,13 +364,15 @@
                     <div class="flex gap-2">
                       <button
                         on:click={() => editProduct(product)}
-                        class="text-blue-600 hover:text-blue-900 font-medium"
+                        disabled={loading}
+                        class="text-blue-600 hover:text-blue-900 font-medium disabled:text-blue-300 disabled:cursor-not-allowed"
                       >
                         Edit
                       </button>
                       <button
                         on:click={() => deleteProduct(product.id!)}
-                        class="text-red-600 hover:text-red-900 font-medium"
+                        disabled={loading}
+                        class="text-red-600 hover:text-red-900 font-medium disabled:text-red-300 disabled:cursor-not-allowed"
                       >
                         Delete
                       </button>
