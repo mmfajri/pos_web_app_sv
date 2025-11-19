@@ -24,7 +24,6 @@
   let showPassword: boolean = false;
 
   async function handleLogin(event: Event): Promise<void> {
-    debugger;
     event.preventDefault();
     error = null;
     loading = true;
