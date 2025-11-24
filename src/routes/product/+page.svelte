@@ -1,27 +1,15 @@
 <script lang="ts">
   import Navbar from "$lib/components/Navbar.svelte";
   import { logout } from "$lib/utils/logout";
-  import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-  import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
-  import type { ApiResponse } from "$lib/utils/ApiResponse";
-
-  // Product interface
-  interface Product {
-    id?: number;
-    barcodeID: string;
-    title: string;
-    quantityType: string;
-    pricePerQty: number;
-  }
-
-  interface ProductModel {
-    id?: number;
-    barcodeID: string;
-    title: string;
-    unit: string;
-    amount: number;
-  }
+  import { getAllUnits } from "$lib/controllers/UnitController";
+  import {
+    getAllProducts,
+    createProduct as createProductAPI,
+    updateProduct as updateProductAPI,
+    deleteProduct as deleteProductAPI,
+    type Product,
+  } from "$lib/controllers/ProductController";
 
   let error: string | null = null;
   let loading: boolean = false;
@@ -36,38 +24,39 @@
 
   // Product list
   let products: Product[] = [];
-  let editingId: number | null = null; // Fixed: use | instead of ||
+  let editingId: number | null = null;
+  
+  // Quantity types from API
+  let quantityTypes: string[] = [];
 
   // Load products from API
   async function fetchProducts(barcodeID?: string) {
-    // Fixed parameter syntax
     loading = true;
     try {
-      let url: string = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}`; // Fixed: use backticks and correct variable name
-      if (barcodeID) {
-        url += `?barcodeID=${encodeURIComponent(barcodeID)}`; // Fixed: added ? and fixed string interpolation
-      }
-      const response: Response = await fetch(url); // Fixed: use url variable, not string 'url'
-      if (response.ok) {
-        debugger;
-        const apiResponse: ApiResponse = await response.json();
-        products = apiResponse.data;
-        error = null;
-      } else {
-        error = `Failed to fetch products: ${response.status}`;
-        console.error("Failed to fetch products:", response.status);
-      }
+      products = await getAllProducts(barcodeID);
+      error = null;
     } catch (err: unknown) {
-      error = "Network error. Please check your connection and try again.";
+      error = "Failed to load products. Please try again.";
       console.error("Fetch products error:", err);
     } finally {
       loading = false;
     }
   }
 
+  // Fetch all units/quantity types
+  async function fetchQuantityTypes() {
+    try {
+      const units = await getAllUnits();
+      quantityTypes = units.map(unit => unit.name);
+    } catch (err) {
+      console.error("Error loading quantity types:", err);
+    }
+  }
+
   // Load products on component mount
   onMount(() => {
     fetchProducts();
+    fetchQuantityTypes();
   });
 
   // Handle form submission
@@ -85,41 +74,19 @@
 
   // Create new product
   async function createProduct() {
-    const createProductModel: ProductModel = {
-      barcodeID: formData.barcodeID,
-      title: formData.title,
-      unit: formData.quantityType,
-      amount: formData.pricePerQty,
-    };
-
     try {
       loading = true;
-      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(createProductModel),
-      });
-
-      const result: ApiResponse = await response.json();
-
-      if (response.ok) {
-        console.log("Add Product successful:", result);
-        resetForm();
-        // Refresh the product list
-        await fetchProducts();
-      } else {
-        // error = result.message || result.errors?.join(", ") || `Add Product failed with status: ${response.status}`;
-      }
+      await createProductAPI(formData);
+      console.log("Product created successfully");
+      resetForm();
+      await fetchProducts();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = "Network error. Please check your connection and try again.";
-        console.error("Registration error:", err.message);
+        error = err.message;
       } else {
-        error = "An unexpected error occurred";
-        console.error("Unknown error:", err);
+        error = "Failed to create product";
       }
+      console.error("Create product error:", err);
     } finally {
       loading = false;
     }
@@ -127,41 +94,19 @@
 
   // Update existing product
   async function updateProduct() {
-    const updateProductModel: ProductModel = {
-      barcodeID: formData.barcodeID,
-      title: formData.title,
-      unit: formData.quantityType,
-      amount: formData.pricePerQty,
-    };
-
     try {
       loading = true;
-      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Update`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateProductModel),
-      });
-
-      const result: ApiResponse = await response.json();
-
-      if (response.ok) {
-        console.log("Update Product successful:", result);
-        resetForm();
-        // Refresh the product list
-        await fetchProducts();
-      } else {
-        // error = result.message || result.errors?.join(", ") || `Update Product failed with status: ${response.status}`;
-      }
+      await updateProductAPI(formData);
+      console.log("Product updated successfully");
+      resetForm();
+      await fetchProducts();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = "Network error. Please check your connection and try again.";
-        console.error("Update error:", err.message);
+        error = err.message;
       } else {
-        error = "An unexpected error occurred";
-        console.error("Unknown error:", err);
+        error = "Failed to update product";
       }
+      console.error("Update product error:", err);
     } finally {
       loading = false;
     }
@@ -178,21 +123,16 @@
     if (confirm("Are you sure you want to delete this product?")) {
       try {
         loading = true;
-        const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Delete/${id}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          console.log("Delete Product successful");
-          // Refresh the product list
-          await fetchProducts();
-        } else {
-          error = `Delete Product failed with status: ${response.status}`;
-          console.error("Failed to delete product:", response.status);
-        }
+        await deleteProductAPI(id);
+        console.log("Product deleted successfully");
+        await fetchProducts();
       } catch (err: unknown) {
-        error = "Network error. Please check your connection and try again.";
-        console.error("Delete error:", err);
+        if (err instanceof Error) {
+          error = err.message;
+        } else {
+          error = "Failed to delete product";
+        }
+        console.error("Delete product error:", err);
       } finally {
         loading = false;
       }
@@ -211,8 +151,6 @@
     error = null;
   }
 
-  // Quantity type options
-  const quantityTypes = ["pcs", "ball", "kg", "gram", "liter", "ml", "pack", "box"];
 </script>
 
 <Navbar onLogout={logout}></Navbar>

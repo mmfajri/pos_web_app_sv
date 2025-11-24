@@ -1,21 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import PasswordInput from "$lib/components/PasswordInput.svelte";
-  import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
-
-  // Interface for the form data
-  interface FormData {
-    username: string;
-    password: string;
-  }
-
-  // Interface for the API response (adjust based on your API)
-  interface ApiResponse {
-    message?: string;
-    success?: boolean;
-    errors?: string[];
-    // Add other properties your API returns
-  }
+  import { login } from "$lib/controllers/AuthController";
 
   let username: string = "";
   let password: string = "";
@@ -28,41 +14,26 @@
     error = null;
     loading = true;
 
-    const formData: FormData = {
-      username: username.trim(),
-      password: password,
-    };
-
     try {
-      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH}/Login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+      const result = await login({
+        username: username.trim(),
+        password: password,
       });
 
-      const result: ApiResponse = await response.json();
-
-      if (response.ok) {
-        console.log("LoginSucces successful:", result);
-        goto("/dashboard");
-      } else {
-        // Handle different types of error responses
-        error = result.message || result.errors?.join(", ") || ` failed with status: ${response.status}`;
-      }
+      console.log("Login successful:", result);
+      goto("/dashboard");
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = "Network error. Please check your connection and try again.";
-        console.error(" error:", err.message);
+        error = err.message;
       } else {
         error = "An unexpected error occurred";
-        console.error("Unknown error:", err);
       }
+      console.error("Login error:", err);
     } finally {
       loading = false;
     }
   }
+
   function handleRegister() {
     goto("/register");
   }

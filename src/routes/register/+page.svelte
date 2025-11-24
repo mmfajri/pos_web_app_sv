@@ -1,23 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import PasswordInput from "$lib/components/PasswordInput.svelte";
-  import { API_ENDPOINTS, API_BASE_URL } from "$lib/utils/const_variable";
-
-  // Interface for the form data
-  interface RegisterData {
-    username: string;
-    email: string;
-    password: string;
-    confirmPassword?: string; // Optional if your API doesn't need it
-  }
-
-  // Interface for the API response (adjust based on your API)
-  interface ApiResponse {
-    message?: string;
-    success?: boolean;
-    errors?: string[];
-    // Add other properties your API returns
-  }
+  import { register } from "$lib/controllers/AuthController";
 
   let username: string = "";
   let email: string = "";
@@ -51,40 +35,22 @@
       return;
     }
 
-    const formData: RegisterData = {
-      username: username.trim(),
-      email: email.trim(),
-      password: password,
-      // Only include confirmPassword if your API expects it
-      // confirmPassword: confirmPassword
-    };
-
     try {
-      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+      const result = await register({
+        username: username.trim(),
+        email: email.trim(),
+        password: password,
       });
 
-      const result: ApiResponse = await response.json();
-
-      if (response.ok) {
-        console.log("Registration successful:", result);
-        goto("/login");
-      } else {
-        // Handle different types of error responses
-        error = result.message || result.errors?.join(", ") || `Registration failed with status: ${response.status}`;
-      }
+      console.log("Registration successful:", result);
+      goto("/login");
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = "Network error. Please check your connection and try again.";
-        console.error("Registration error:", err.message);
+        error = err.message;
       } else {
         error = "An unexpected error occurred";
-        console.error("Unknown error:", err);
       }
+      console.error("Registration error:", err);
     } finally {
       loading = false;
     }
