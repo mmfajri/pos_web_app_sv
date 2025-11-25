@@ -1,15 +1,29 @@
 <script lang="ts">
   import Navbar from "$lib/components/Navbar.svelte";
+  import Dropdown from "$lib/components/dropdown.svelte";
   import { logout } from "$lib/utils/logout";
+  import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-  import { getAllUnits } from "$lib/controllers/UnitController";
-  import {
-    getAllProducts,
-    createProduct as createProductAPI,
-    updateProduct as updateProductAPI,
-    deleteProduct as deleteProductAPI,
-    type Product,
-  } from "$lib/controllers/ProductController";
+  import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
+  import type { ApiResponse } from "$lib/utils/ApiResponse";
+  import { getAllUnits, getUnitsByName, type Unit } from "$lib/controllers/UnitController";
+
+  // Product interface
+  interface Product {
+    id?: number;
+    barcodeID: string;
+    title: string;
+    quantityType: string;
+    pricePerQty: number;
+  }
+
+  interface ProductModel {
+    id?: number;
+    barcodeID: string;
+    title: string;
+    unit: string;
+    amount: number;
+  }
 
   let error: string | null = null;
   let loading: boolean = false;
@@ -25,38 +39,54 @@
   // Product list
   let products: Product[] = [];
   let editingId: number | null = null;
-  
-  // Quantity types from API
-  let quantityTypes: string[] = [];
 
   // Load products from API
   async function fetchProducts(barcodeID?: string) {
+    // Fixed parameter syntax
     loading = true;
     try {
-      products = await getAllProducts(barcodeID);
-      error = null;
+      let url: string = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}`; // Fixed: use backticks and correct variable name
+      if (barcodeID) {
+        url += `?barcodeID=${encodeURIComponent(barcodeID)}`; // Fixed: added ? and fixed string interpolation
+      }
+      const response: Response = await fetch(url); // Fixed: use url variable, not string 'url'
+      if (response.ok) {
+        debugger;
+        const apiResponse: ApiResponse = await response.json();
+        products = apiResponse.data;
+        error = null;
+      } else {
+        error = `Failed to fetch products: ${response.status}`;
+        console.error("Failed to fetch products:", response.status);
+      }
     } catch (err: unknown) {
-      error = "Failed to load products. Please try again.";
+      error = "Network error. Please check your connection and try again.";
       console.error("Fetch products error:", err);
     } finally {
       loading = false;
     }
   }
 
-  // Fetch all units/quantity types
-  async function fetchQuantityTypes() {
-    try {
-      const units = await getAllUnits();
-      quantityTypes = units.map(unit => unit.name);
-    } catch (err) {
-      console.error("Error loading quantity types:", err);
-    }
+  // Handle unit selection from dropdown
+  function handleUnitSelect(event: CustomEvent<Unit>) {
+    formData.quantityType = event.detail.name;
+    console.log('Selected unit:', event.detail);
+  }
+
+  // Handle unit clear
+  function handleUnitClear() {
+    formData.quantityType = '';
+  }
+
+  // Search function for units (optional)
+  async function searchUnits(term: string): Promise<Unit[]> {
+    const unit = await getUnitsByName(term);
+    return unit ? [unit] : [];
   }
 
   // Load products on component mount
   onMount(() => {
     fetchProducts();
-    fetchQuantityTypes();
   });
 
   // Handle form submission
@@ -74,19 +104,41 @@
 
   // Create new product
   async function createProduct() {
+    const createProductModel: ProductModel = {
+      barcodeID: formData.barcodeID,
+      title: formData.title,
+      unit: formData.quantityType,
+      amount: formData.pricePerQty,
+    };
+
     try {
       loading = true;
-      await createProductAPI(formData);
-      console.log("Product created successfully");
-      resetForm();
-      await fetchProducts();
+      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createProductModel),
+      });
+
+      const result: ApiResponse = await response.json();
+
+      if (response.ok) {
+        console.log("Add Product successful:", result);
+        resetForm();
+        // Refresh the product list
+        await fetchProducts();
+      } else {
+        // error = result.message || result.errors?.join(", ") || `Add Product failed with status: ${response.status}`;
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = err.message;
+        error = "Network error. Please check your connection and try again.";
+        console.error("Registration error:", err.message);
       } else {
-        error = "Failed to create product";
+        error = "An unexpected error occurred";
+        console.error("Unknown error:", err);
       }
-      console.error("Create product error:", err);
     } finally {
       loading = false;
     }
@@ -94,19 +146,41 @@
 
   // Update existing product
   async function updateProduct() {
+    const updateProductModel: ProductModel = {
+      barcodeID: formData.barcodeID,
+      title: formData.title,
+      unit: formData.quantityType,
+      amount: formData.pricePerQty,
+    };
+
     try {
       loading = true;
-      await updateProductAPI(formData);
-      console.log("Product updated successfully");
-      resetForm();
-      await fetchProducts();
+      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updateProductModel),
+      });
+
+      const result: ApiResponse = await response.json();
+
+      if (response.ok) {
+        console.log("Update Product successful:", result);
+        resetForm();
+        // Refresh the product list
+        await fetchProducts();
+      } else {
+        // error = result.message || result.errors?.join(", ") || `Update Product failed with status: ${response.status}`;
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = err.message;
+        error = "Network error. Please check your connection and try again.";
+        console.error("Update error:", err.message);
       } else {
-        error = "Failed to update product";
+        error = "An unexpected error occurred";
+        console.error("Unknown error:", err);
       }
-      console.error("Update product error:", err);
     } finally {
       loading = false;
     }
@@ -123,16 +197,21 @@
     if (confirm("Are you sure you want to delete this product?")) {
       try {
         loading = true;
-        await deleteProductAPI(id);
-        console.log("Product deleted successfully");
-        await fetchProducts();
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          error = err.message;
+        const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Delete/${id}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          console.log("Delete Product successful");
+          // Refresh the product list
+          await fetchProducts();
         } else {
-          error = "Failed to delete product";
+          error = `Delete Product failed with status: ${response.status}`;
+          console.error("Failed to delete product:", response.status);
         }
-        console.error("Delete product error:", err);
+      } catch (err: unknown) {
+        error = "Network error. Please check your connection and try again.";
+        console.error("Delete error:", err);
       } finally {
         loading = false;
       }
@@ -201,17 +280,18 @@
         <!-- Quantity Type -->
         <div>
           <label for="quantityType" class="block text-sm font-medium text-gray-700 mb-1">Quantity Type *</label>
-          <select
-            id="quantityType"
+          <Dropdown
             bind:value={formData.quantityType}
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select quantity type</option>
-            {#each quantityTypes as type}
-              <option value={type}>{type}</option>
-            {/each}
-          </select>
+            placeholder="Search for quantity type (e.g., PC, Box, Kg...)"
+            required={true}
+            fetchAllItems={getAllUnits}
+            searchItems={searchUnits}
+            getDisplayText={(unit: Unit) => unit.name}
+            getValue={(unit: Unit) => unit.name}
+            getKey={(unit: Unit) => unit.id}
+            on:select={handleUnitSelect}
+            on:clear={handleUnitClear}
+          />
         </div>
 
         <!-- Price per Quantity -->
@@ -331,6 +411,5 @@
   input:focus,
   select:focus {
     outline: none;
-    ring: 2px;
   }
 </style>
