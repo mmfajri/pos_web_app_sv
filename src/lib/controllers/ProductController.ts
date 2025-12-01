@@ -49,12 +49,13 @@ export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 }
 
 export async function createProduct(product: Product): Promise<ApiResponse> {
+	debugger;
 	try {
 		const createProductModel: ProductModel = {
-			barcodeID: product.barcodeID,
+			barcodeId: product.barcodeID,
 			title: product.title,
-			unit: product.quantityType,
-			amount: product.pricePerQty,
+			quantityType: product.quantityType,
+			amount: product.amount,
 		};
 
 		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
@@ -81,10 +82,10 @@ export async function createProduct(product: Product): Promise<ApiResponse> {
 export async function updateProduct(product: Product): Promise<ApiResponse> {
 	try {
 		const updateProductModel: ProductModel = {
-			barcodeID: product.barcodeID,
+			barcodeId: product.barcodeID,
 			title: product.title,
-			unit: product.quantityType,
-			amount: product.pricePerQty,
+			quantityType: product.quantityType,
+			amount: product.amount,
 		};
 
 		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Update`, {
