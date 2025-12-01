@@ -6,14 +6,14 @@ export interface Product {
 	barcodeID: string;
 	title: string;
 	quantityType: string;
-	pricePerQty: number;
+	amount: number;
 }
 
 export interface ProductModel {
 	id?: number;
-	barcodeID: string;
+	barcodeId: string;
 	title: string;
-	unit: string;
+	quantityType: string;
 	amount: number;
 }
 
@@ -30,8 +30,18 @@ export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 			throw new Error(`Failed to fetch products: ${response.status}`);
 		}
 
-		const apiResponse: ApiResponse<Product[]> = await response.json();
-		return apiResponse.data || [];
+		const apiResponse: ApiResponse<ProductModel[]> = await response.json();
+
+		// Map API response to Product interface
+		const products: Product[] = (apiResponse.data || []).map(item => ({
+			id: item.id,
+			barcodeID: item.barcodeId,
+			title: item.title,
+			quantityType: item.quantityType,  // Map 'unit' to 'quantityType'
+			amount: item.amount        // Keep 'amount' as is
+		}));
+
+		return products;
 	} catch (error) {
 		console.error("Error fetching products:", error);
 		throw error;

@@ -2,28 +2,15 @@
   import Navbar from "$lib/components/Navbar.svelte";
   import Dropdown from "$lib/components/dropdown.svelte";
   import { logout } from "$lib/utils/logout";
-  import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-  import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
-  import type { ApiResponse } from "$lib/utils/ApiResponse";
   import { getAllUnits, getUnitsByName, type Unit } from "$lib/controllers/UnitController";
-
-  // Product interface
-  interface Product {
-    id?: number;
-    barcodeID: string;
-    title: string;
-    quantityType: string;
-    pricePerQty: number;
-  }
-
-  interface ProductModel {
-    id?: number;
-    barcodeID: string;
-    title: string;
-    unit: string;
-    amount: number;
-  }
+  import {
+    getAllProducts,
+    createProduct as createProductAPI,
+    updateProduct as updateProductAPI,
+    deleteProduct as deleteProductAPI,
+    type Product,
+  } from "$lib/controllers/ProductController";
 
   let error: string | null = null;
   let loading: boolean = false;
@@ -33,7 +20,7 @@
     barcodeID: "",
     title: "",
     quantityType: "",
-    pricePerQty: 0,
+    amount: 0,
   };
 
   // Product list
@@ -42,25 +29,13 @@
 
   // Load products from API
   async function fetchProducts(barcodeID?: string) {
-    // Fixed parameter syntax
     loading = true;
     try {
-      let url: string = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}`; // Fixed: use backticks and correct variable name
-      if (barcodeID) {
-        url += `?barcodeID=${encodeURIComponent(barcodeID)}`; // Fixed: added ? and fixed string interpolation
-      }
-      const response: Response = await fetch(url); // Fixed: use url variable, not string 'url'
-      if (response.ok) {
-        debugger;
-        const apiResponse: ApiResponse = await response.json();
-        products = apiResponse.data;
-        error = null;
-      } else {
-        error = `Failed to fetch products: ${response.status}`;
-        console.error("Failed to fetch products:", response.status);
-      }
+      products = await getAllProducts(barcodeID);
+      console.log('Products loaded:', products);
+      error = null;
     } catch (err: unknown) {
-      error = "Network error. Please check your connection and try again.";
+      error = "Failed to load products. Please try again.";
       console.error("Fetch products error:", err);
     } finally {
       loading = false;
@@ -70,12 +45,12 @@
   // Handle unit selection from dropdown
   function handleUnitSelect(event: CustomEvent<Unit>) {
     formData.quantityType = event.detail.name;
-    console.log('Selected unit:', event.detail);
+    console.log("Selected unit:", event.detail);
   }
 
   // Handle unit clear
   function handleUnitClear() {
-    formData.quantityType = '';
+    formData.quantityType = "";
   }
 
   // Search function for units (optional)
@@ -94,51 +69,27 @@
     event.preventDefault();
 
     if (editingId !== null) {
-      // Update existing product
       await updateProduct();
     } else {
-      // Add new product
       await createProduct();
     }
   }
 
   // Create new product
   async function createProduct() {
-    const createProductModel: ProductModel = {
-      barcodeID: formData.barcodeID,
-      title: formData.title,
-      unit: formData.quantityType,
-      amount: formData.pricePerQty,
-    };
-
     try {
       loading = true;
-      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(createProductModel),
-      });
-
-      const result: ApiResponse = await response.json();
-
-      if (response.ok) {
-        console.log("Add Product successful:", result);
-        resetForm();
-        // Refresh the product list
-        await fetchProducts();
-      } else {
-        // error = result.message || result.errors?.join(", ") || `Add Product failed with status: ${response.status}`;
-      }
+      await createProductAPI(formData);
+      console.log("Product created successfully");
+      resetForm();
+      await fetchProducts();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = "Network error. Please check your connection and try again.";
-        console.error("Registration error:", err.message);
+        error = err.message;
       } else {
-        error = "An unexpected error occurred";
-        console.error("Unknown error:", err);
+        error = "Failed to create product";
       }
+      console.error("Create product error:", err);
     } finally {
       loading = false;
     }
@@ -146,41 +97,19 @@
 
   // Update existing product
   async function updateProduct() {
-    const updateProductModel: ProductModel = {
-      barcodeID: formData.barcodeID,
-      title: formData.title,
-      unit: formData.quantityType,
-      amount: formData.pricePerQty,
-    };
-
     try {
       loading = true;
-      const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Update`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateProductModel),
-      });
-
-      const result: ApiResponse = await response.json();
-
-      if (response.ok) {
-        console.log("Update Product successful:", result);
-        resetForm();
-        // Refresh the product list
-        await fetchProducts();
-      } else {
-        // error = result.message || result.errors?.join(", ") || `Update Product failed with status: ${response.status}`;
-      }
+      await updateProductAPI(formData);
+      console.log("Product updated successfully");
+      resetForm();
+      await fetchProducts();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        error = "Network error. Please check your connection and try again.";
-        console.error("Update error:", err.message);
+        error = err.message;
       } else {
-        error = "An unexpected error occurred";
-        console.error("Unknown error:", err);
+        error = "Failed to update product";
       }
+      console.error("Update product error:", err);
     } finally {
       loading = false;
     }
@@ -197,21 +126,16 @@
     if (confirm("Are you sure you want to delete this product?")) {
       try {
         loading = true;
-        const response: Response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Delete/${id}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          console.log("Delete Product successful");
-          // Refresh the product list
-          await fetchProducts();
-        } else {
-          error = `Delete Product failed with status: ${response.status}`;
-          console.error("Failed to delete product:", response.status);
-        }
+        await deleteProductAPI(id);
+        console.log("Product deleted successfully");
+        await fetchProducts();
       } catch (err: unknown) {
-        error = "Network error. Please check your connection and try again.";
-        console.error("Delete error:", err);
+        if (err instanceof Error) {
+          error = err.message;
+        } else {
+          error = "Failed to delete product";
+        }
+        console.error("Delete product error:", err);
       } finally {
         loading = false;
       }
@@ -224,12 +148,11 @@
       barcodeID: "",
       title: "",
       quantityType: "",
-      pricePerQty: 0,
+      amount: 0,
     };
     editingId = null;
     error = null;
   }
-
 </script>
 
 <Navbar onLogout={logout}></Navbar>
@@ -294,13 +217,13 @@
           />
         </div>
 
-        <!-- Price per Quantity -->
+        <!-- Amount -->
         <div>
-          <label for="pricePerQty" class="block text-sm font-medium text-gray-700 mb-1">Price per Quantity *</label>
+          <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
           <input
-            id="pricePerQty"
+            id="amount"
             type="number"
-            bind:value={formData.pricePerQty}
+            bind:value={formData.amount}
             required
             min="0"
             step="0.01"
@@ -341,10 +264,18 @@
     <div class="flex-1">
       <h2 class="text-2xl font-semibold mb-4">Product List</h2>
 
-      {#if loading && products.length === 0}
-        <div class="text-center py-8 text-gray-500">Loading products...</div>
+      {#if loading}
+        <div class="text-center py-8 text-gray-500">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+          <p>Loading products...</p>
+        </div>
       {:else if products.length === 0}
-        <div class="text-center py-8 text-gray-500">No products found. Add your first product!</div>
+        <div class="text-center py-8 text-gray-500">
+          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+          </svg>
+          <p>No products found. Add your first product!</p>
+        </div>
       {:else}
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
           <table class="w-full">
@@ -359,7 +290,7 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Quantity Type
                 </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -376,7 +307,7 @@
                     {product.quantityType}
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-900">
-                    ${product.pricePerQty.toFixed(2)}
+                    ${product.amount.toFixed(2)}
                   </td>
                   <td class="px-4 py-3 text-sm">
                     <div class="flex gap-2">
@@ -407,9 +338,15 @@
 </main>
 
 <style>
-  /* Additional styling if needed */
-  input:focus,
-  select:focus {
+  input:focus {
     outline: none;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
   }
 </style>

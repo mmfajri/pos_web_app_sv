@@ -1,5 +1,5 @@
 <script lang="ts" generics="T">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
 
   // Generic props
   export let value: string = "";
@@ -38,35 +38,37 @@
   // Load all items
   async function loadAllItems() {
     if (allItems.length > 0) return;
-
+    
     isLoading = true;
     try {
       allItems = await fetchAllItems();
       filteredItems = allItems;
     } catch (error) {
-      console.log("Error loading items dropdown: ", error);
+      console.error('Error loading items:', error);
     } finally {
       isLoading = false;
     }
   }
 
-  // Search/Filtered items
+  // Search/filter items
   async function performSearch() {
     if (!searchTerm.trim()) {
       filteredItems = allItems;
       return;
     }
+
     isLoading = true;
     try {
-      // Try local filtering first
       const lowerSearchTerm = searchTerm.toLowerCase();
-      filteredItems = allItems.filter((item) => getDisplayText(item).toLowerCase().includes(lowerSearchTerm));
+      filteredItems = allItems.filter(item => 
+        getDisplayText(item).toLowerCase().includes(lowerSearchTerm)
+      );
 
       if (filteredItems.length === 0 && searchItems) {
         filteredItems = await searchItems(searchTerm);
       }
     } catch (error) {
-      console.error("Search error dropdown: ", error);
+      console.error('Search error:', error);
       filteredItems = [];
     } finally {
       isLoading = false;
@@ -86,13 +88,15 @@
     searchTerm = displayText;
     value = getValue ? getValue(item) : displayText;
     showDropdown = false;
-    dispatch("select", item);
+    dispatch('select', item);
   }
 
   // Handle focus
   function handleFocus() {
     if (disabled) return;
-    loadAllItems();
+    if (allItems.length === 0) {
+      loadAllItems();
+    }
     showDropdown = true;
   }
 
@@ -105,16 +109,18 @@
 
   // Clear selection
   function clearSelection() {
-    searchTerm = "";
-    value = "";
+    searchTerm = '';
+    value = '';
     selectedItem = null;
     filteredItems = allItems;
     showDropdown = false;
-    dispatch("clear");
+    dispatch('clear');
   }
 
-  // Initialize on mount
-  loadAllItems();
+  // Initialize on mount - only load items when component is mounted
+  onMount(() => {
+    // Don't load items here, wait for user interaction
+  });
 </script>
 
 <div class="relative">
@@ -132,17 +138,18 @@
       class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
       autocomplete="off"
     />
-
+    
     <!-- Clear button -->
     {#if searchTerm && !disabled}
       <button
         type="button"
         on:click={clearSelection}
+        aria-label="Clear selection"
         class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         tabindex="-1"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
     {/if}
@@ -151,7 +158,7 @@
     {#if !searchTerm}
       <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
         </svg>
       </div>
     {/if}
@@ -159,16 +166,16 @@
 
   <!-- Dropdown list -->
   {#if showDropdown && !disabled}
-    <div
-      class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
-    >
+    <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
       {#if isLoading}
         <div class="px-3 py-2 text-sm text-gray-500 text-center">
           <div class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
           <span class="ml-2">Loading...</span>
         </div>
       {:else if filteredItems.length === 0}
-        <div class="px-3 py-2 text-sm text-gray-500 text-center">No items found</div>
+        <div class="px-3 py-2 text-sm text-gray-500 text-center">
+          No items found
+        </div>
       {:else}
         {#each filteredItems as item (getKey(item))}
           <button
@@ -189,32 +196,28 @@
 </div>
 
 <style>
-  /* Custom scrollbar */
   div::-webkit-scrollbar {
     width: 8px;
   }
-
+  
   div::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
   }
-
+  
   div::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 4px;
   }
-
+  
   div::-webkit-scrollbar-thumb:hover {
     background: #555;
   }
 
-  /* Loading spinner animation */
   @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
   }
-
+  
   .animate-spin {
     animation: spin 1s linear infinite;
   }
