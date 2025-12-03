@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
+import { API_BASE_URL, API_ENDPOINTS, API_STATUS_CODE } from "$lib/utils/const_variable";
 import type { ApiResponse } from "$lib/utils/ApiResponse";
 
 export interface Product {
@@ -27,7 +27,10 @@ export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 		const response = await fetch(url);
 
 		if (!response.ok) {
-			throw new Error(`Failed to fetch products: ${response.status}`);
+			if (response.status === API_STATUS_CODE.NOT_FOUND)
+				return [];
+			else
+				throw new Error(`Failed to fetch products: ${response.status}`);
 		}
 
 		const apiResponse: ApiResponse<ProductModel[]> = await response.json();
@@ -49,7 +52,6 @@ export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 }
 
 export async function createProduct(product: Product): Promise<ApiResponse> {
-	debugger;
 	try {
 		const createProductModel: ProductModel = {
 			barcodeId: product.barcodeID,
@@ -87,6 +89,7 @@ export async function createProduct(product: Product): Promise<ApiResponse> {
 export async function updateProduct(product: Product): Promise<ApiResponse> {
 	try {
 		const updateProductModel: ProductModel = {
+			id: product.id,
 			barcodeId: product.barcodeID,
 			title: product.title,
 			quantityType: product.quantityType,

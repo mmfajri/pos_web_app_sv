@@ -182,7 +182,9 @@
             type="text"
             bind:value={formData.barcodeID}
             required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={editingId !== null}
+            autocomplete="off"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="Enter barcode ID"
           />
         </div>
@@ -195,6 +197,7 @@
             type="text"
             bind:value={formData.title}
             required
+            autocomplete="off"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter product title"
           />
@@ -229,6 +232,7 @@
             step="0.01"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="0.00"
+            autocomplete="off"
           />
         </div>
 
@@ -279,7 +283,7 @@
               d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
             />
           </svg>
-          <p>No products found. Add your first product!</p>
+          <p>No products found !</p>
         </div>
       {:else}
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
