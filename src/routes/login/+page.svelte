@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import PasswordInput from "$lib/components/PasswordInput.svelte";
+  import { login } from "$lib/controllers/AuthController";
 
   let username: string = "";
   let password: string = "";
@@ -8,17 +9,31 @@
   let loading = false;
   let showPassword: boolean = false;
 
-  function handleLogin(event: Event) {
+  async function handleLogin(event: Event): Promise<void> {
     event.preventDefault();
     error = null;
     loading = true;
 
-    // Simulate login
-    setTimeout(() => {
-      console.log("Logging in:", { username, password });
+    try {
+      const result = await login({
+        username: username.trim(),
+        password: password,
+      });
+
+      console.log("Login successful:", result);
       goto("/dashboard");
-    }, 1000);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        error = err.message;
+      } else {
+        error = "An unexpected error occurred";
+      }
+      console.error("Login error:", err);
+    } finally {
+      loading = false;
+    }
   }
+
   function handleRegister() {
     goto("/register");
   }
