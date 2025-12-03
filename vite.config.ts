@@ -4,10 +4,13 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
 	plugins: [sveltekit(), tailwindcss()],
-	server: { 
-		watch: { 
-			ignored: ['**/.vscode/**', '**/.vscode/vscode-chrome-debug-userdatadir/**'] 
-		} 
+	build: {
+		sourcemap: true
+	},
+	server: {
+		watch: {
+			ignored: ['**/.vscode/**', '**/.vscode/vscode-chrome-debug-userdatadir/**']
+		}
 	},
 	optimizeDeps: {
 		exclude: ['@sveltejs/kit', '@tailwindcss/vite']
