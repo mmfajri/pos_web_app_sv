@@ -58,6 +58,11 @@ export async function createProduct(product: Product): Promise<ApiResponse> {
 			amount: product.amount,
 		};
 
+		console.log(createProductModel.barcodeId)
+		console.log(createProductModel.title)
+		console.log(createProductModel.quantityType)
+		console.log(createProductModel.amount)
+
 		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
 			method: "POST",
 			headers: {
@@ -111,7 +116,7 @@ export async function updateProduct(product: Product): Promise<ApiResponse> {
 
 export async function deleteProduct(id: number): Promise<void> {
 	try {
-		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Delete/${id}`, {
+		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Delete?id=${encodeURIComponent(id)}`, {
 			method: "DELETE",
 		});
 
