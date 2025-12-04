@@ -3,13 +3,16 @@
   import Dropdown from "$lib/components/dropdown.svelte";
   import { logout } from "$lib/utils/logout";
   import { onMount } from "svelte";
-  import { getAllUnits, getUnitsByName, type Unit } from "$lib/controllers/UnitController";
+  import { getAllUnitsDropdown, getUnitsByNameDropdown, type Unit } from "$lib/controllers/UnitController";
   import {
     getAllProducts,
     createProduct as createProductAPI,
     updateProduct as updateProductAPI,
     deleteProduct as deleteProductAPI,
+    getAllProductDropdown as getAllProductDropdownAPI,
+    getProductByBarcodeDropdown as getProductByBarcodeDropdownAPI,
     type Product,
+    type ProductModelDropdown,
   } from "$lib/controllers/ProductController";
 
   let error: string | null = null;
@@ -48,15 +51,31 @@
     console.log("Selected unit:", event.detail);
   }
 
+  function handleProductSelect(event: CustomEvent<ProductModelDropdown>) {
+    formData.barcodeID = event.detail.barcodeId;
+    formData.title = event.detail.title;
+    console.log("Selected unit:", event.detail);
+  }
+
   // Handle unit clear
   function handleUnitClear() {
     formData.quantityType = "";
   }
 
+  function handleProductClear() {
+    formData.barcodeID = "";
+    formData.title = "";
+  }
+
   // Search function for units (optional)
   async function searchUnits(term: string): Promise<Unit[]> {
-    const unit = await getUnitsByName(term);
+    const unit = await getUnitsByNameDropdown(term);
     return unit ? [unit] : [];
+  }
+
+  async function searchProducts(term: string): Promise<ProductModelDropdown[]> {
+    const product = await getProductByBarcodeDropdownAPI(term);
+    return product ? [product] : [];
   }
 
   // Load products on component mount
@@ -177,15 +196,17 @@
         <!-- Barcode ID -->
         <div>
           <label for="barcodeID" class="block text-sm font-medium text-gray-700 mb-1">Barcode ID *</label>
-          <input
-            id="barcodeID"
-            type="text"
+          <Dropdown
             bind:value={formData.barcodeID}
-            required
-            disabled={editingId !== null}
-            autocomplete="off"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            placeholder="Enter barcode ID"
+            placeholder="Search Product By Barcode"
+            required={true}
+            fetchAllItems={getAllProductDropdownAPI}
+            searchItems={searchProducts}
+            getDisplayText={(product: ProductModelDropdown) => product.barcodeId}
+            getValue={(product: ProductModelDropdown) => product.barcodeId}
+            getKey={(product: ProductModelDropdown) => product.barcodeId}
+            on:select={handleProductSelect}
+            on:clear={handleProductClear}
           />
         </div>
 
@@ -210,7 +231,7 @@
             bind:value={formData.quantityType}
             placeholder="Search for quantity type (e.g., PC, Box, Kg...)"
             required={true}
-            fetchAllItems={getAllUnits}
+            fetchAllItems={getAllUnitsDropdown}
             searchItems={searchUnits}
             getDisplayText={(unit: Unit) => unit.name}
             getValue={(unit: Unit) => unit.name}

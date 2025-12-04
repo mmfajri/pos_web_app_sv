@@ -43,7 +43,6 @@
 
   // Load all items
   async function loadAllItems() {
-    debugger;
     if (allItems.length > 0) return;
 
     isLoading = true;

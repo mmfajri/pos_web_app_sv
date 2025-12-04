@@ -17,6 +17,66 @@ export interface ProductModel {
 	amount: number;
 }
 
+export interface ProductModelDropdown {
+	barcodeId: string;
+	title: string;
+}
+
+export async function getAllProductDropdown(): Promise<ProductModelDropdown[]> {
+	try {
+		let url = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/GetAllProductDropdown`;
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			if (response.status === API_STATUS_CODE.NOT_FOUND) {
+				return [];
+			}
+			else {
+				throw new Error(`Failed to fetch products: ${response.status}`);
+			}
+		}
+
+		const apiResponse: ApiResponse<ProductModelDropdown[]> = await response.json();
+
+		// Map API response to Product interface
+		const products: ProductModelDropdown[] = (apiResponse.data || []).map(item => ({
+			barcodeId: item.barcodeId,
+			title: item.title,
+		}));
+
+		return products;
+	} catch (error) {
+		console.error("Error fetching products:", error);
+		throw error;
+	}
+}
+
+export async function getProductByBarcodeDropdown(barcodeId: string): Promise<ProductModelDropdown | null> {
+	try {
+		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/GetAllUnitDropdown?barcodeId=${encodeURIComponent(barcodeId)}`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
+
+		if (!response.ok) {
+			if (response.status === API_STATUS_CODE.NOT_FOUND) {
+				return null
+			} else {
+				console.error("Failed to fetch data from api:", response.status);
+				return null;
+			}
+		}
+
+		const apiResponse: ApiResponse<ProductModelDropdown> = await response.json();
+		return apiResponse.data || null;
+	} catch (error) {
+		console.error("Error fetching data:", error);
+		return null;
+	}
+}
+
 export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 	try {
 		let url = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}`;
@@ -27,10 +87,12 @@ export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 		const response = await fetch(url);
 
 		if (!response.ok) {
-			if (response.status === API_STATUS_CODE.NOT_FOUND)
+			if (response.status === API_STATUS_CODE.NOT_FOUND) {
 				return [];
-			else
+			}
+			else {
 				throw new Error(`Failed to fetch products: ${response.status}`);
+			}
 		}
 
 		const apiResponse: ApiResponse<ProductModel[]> = await response.json();
@@ -59,11 +121,6 @@ export async function createProduct(product: Product): Promise<ApiResponse> {
 			quantityType: product.quantityType,
 			amount: product.amount,
 		};
-
-		console.log(createProductModel.barcodeId)
-		console.log(createProductModel.title)
-		console.log(createProductModel.quantityType)
-		console.log(createProductModel.amount)
 
 		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Create`, {
 			method: "POST",
