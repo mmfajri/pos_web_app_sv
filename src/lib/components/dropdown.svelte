@@ -1,11 +1,12 @@
 <script lang="ts" generics="T">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
 
   // Generic props
   export let value: string = "";
   export let placeholder: string = "";
   export let required: boolean = false;
   export let disabled: boolean = false;
+  export let readonly: boolean = false;
 
   // Function to fetch all items
   export let fetchAllItems: () => Promise<T[]>;
@@ -80,7 +81,14 @@
   }
 
   // Handle input changes
-  function handleInput() {
+  function handleInput(event: Event) {
+    if (readonly || disabled) {
+      // Prevent any changes when readonly
+      event.preventDefault();
+      searchTerm = value; // Reset to original value
+      return;
+    }
+    
     internalUpdate = true;
     value = searchTerm;
     showDropdown = true;
@@ -90,8 +98,20 @@
     }, 0);
   }
 
+  // Handle keydown to prevent typing when readonly
+  function handleKeyDown(event: KeyboardEvent) {
+    if (readonly || disabled) {
+      // Allow tab and other navigation keys
+      if (event.key !== 'Tab' && event.key !== 'Shift') {
+        event.preventDefault();
+      }
+    }
+  }
+
   // Select an item
   function selectItem(item: T) {
+    if (readonly || disabled) return;
+    
     internalUpdate = true;
     selectedItem = item;
     const displayText = getDisplayText(item);
@@ -106,8 +126,12 @@
   }
 
   // Handle focus
-  function handleFocus() {
-    if (disabled) return;
+  function handleFocus(event: FocusEvent) {
+    if (disabled || readonly) {
+      // Blur immediately if readonly or disabled
+      (event.target as HTMLInputElement)?.blur();
+      return;
+    }
     if (allItems.length === 0) {
       loadAllItems();
     }
@@ -123,6 +147,8 @@
 
   // Clear selection
   function clearSelection() {
+    if (readonly || disabled) return;
+    
     internalUpdate = true;
     searchTerm = "";
     value = "";
@@ -134,11 +160,6 @@
     }, 0);
     dispatch("clear");
   }
-
-  // Initialize on mount - only load items when component is mounted
-  onMount(() => {
-    // Don't load items here, wait for user interaction
-  });
 </script>
 
 <div class="relative">
@@ -148,17 +169,21 @@
       type="text"
       bind:value={searchTerm}
       on:input={handleInput}
+      on:keydown={handleKeyDown}
       on:focus={handleFocus}
       on:blur={handleBlur}
       {placeholder}
       {required}
-      {disabled}
+      disabled={disabled}
+      readonly={readonly}
       class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      class:bg-gray-50={readonly}
+      class:cursor-not-allowed={readonly}
       autocomplete="off"
     />
 
-    <!-- Clear button -->
-    {#if searchTerm && !disabled}
+    <!-- Clear button - hide when readonly or disabled -->
+    {#if searchTerm && !disabled && !readonly}
       <button
         type="button"
         on:click={clearSelection}
@@ -172,18 +197,27 @@
       </button>
     {/if}
 
-    <!-- Dropdown icon -->
-    {#if !searchTerm}
+    <!-- Dropdown icon - hide when readonly -->
+    {#if !searchTerm && !readonly}
       <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </div>
     {/if}
+
+    <!-- Lock icon when readonly -->
+    {#if readonly}
+      <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+    {/if}
   </div>
 
-  <!-- Dropdown list -->
-  {#if showDropdown && !disabled}
+  <!-- Dropdown list - don't show when readonly or disabled -->
+  {#if showDropdown && !disabled && !readonly}
     <div
       class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
     >

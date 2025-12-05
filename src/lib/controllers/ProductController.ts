@@ -53,7 +53,7 @@ export async function getAllProductDropdown(): Promise<ProductModelDropdown[]> {
 
 export async function getProductByBarcodeDropdown(barcodeId: string): Promise<ProductModelDropdown | null> {
 	try {
-		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/GetAllUnitDropdown?barcodeId=${encodeURIComponent(barcodeId)}`, {
+		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/GetProductByBarcodeIdDropdown?barcodeId=${encodeURIComponent(barcodeId)}`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",

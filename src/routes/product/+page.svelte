@@ -30,6 +30,12 @@
   let products: Product[] = [];
   let editingId: number | null = null;
 
+  // New flag to track if product is selected from dropdown
+  let isProductSelectedFromDropdown: boolean = false;
+
+  // ✅ Add a key to force dropdown to reload
+  let dropdownKey: number = 0;
+
   // Load products from API
   async function fetchProducts(barcodeID?: string) {
     loading = true;
@@ -45,16 +51,23 @@
     }
   }
 
+  // ✅ New function to refresh dropdown data
+  function refreshDropdown() {
+    dropdownKey += 1; // Change key to force re-render and reload data
+  }
+
   // Handle unit selection from dropdown
   function handleUnitSelect(event: CustomEvent<Unit>) {
     formData.quantityType = event.detail.name;
     console.log("Selected unit:", event.detail);
   }
 
+  // Handle product selection from dropdown
   function handleProductSelect(event: CustomEvent<ProductModelDropdown>) {
-    formData.barcodeID = event.detail.barcodeId;
-    formData.title = event.detail.title;
-    console.log("Selected unit:", event.detail);
+    formData.barcodeID = event.detail.barcodeId || "";
+    formData.title = event.detail.title || "";
+    isProductSelectedFromDropdown = true; // Lock when selected
+    console.log("Selected product:", event.detail);
   }
 
   // Handle unit clear
@@ -62,9 +75,11 @@
     formData.quantityType = "";
   }
 
+  // Handle product clear
   function handleProductClear() {
     formData.barcodeID = "";
     formData.title = "";
+    isProductSelectedFromDropdown = false; // Unlock when cleared
   }
 
   // Search function for units (optional)
@@ -102,6 +117,7 @@
       console.log("Product created successfully");
       resetForm();
       await fetchProducts();
+      refreshDropdown(); // ✅ Refresh dropdown after create
     } catch (err: unknown) {
       if (err instanceof Error) {
         error = err.message;
@@ -122,6 +138,7 @@
       console.log("Product updated successfully");
       resetForm();
       await fetchProducts();
+      refreshDropdown(); // ✅ Refresh dropdown after update
     } catch (err: unknown) {
       if (err instanceof Error) {
         error = err.message;
@@ -148,6 +165,7 @@
         await deleteProductAPI(id);
         console.log("Product deleted successfully");
         await fetchProducts();
+        refreshDropdown(); // ✅ Refresh dropdown after delete
       } catch (err: unknown) {
         if (err instanceof Error) {
           error = err.message;
@@ -171,6 +189,7 @@
     };
     editingId = null;
     error = null;
+    isProductSelectedFromDropdown = false; // Reset flag
   }
 </script>
 
@@ -192,34 +211,63 @@
         <p class="text-red-500 text-sm mb-4">{error}</p>
       {/if}
 
-      <form on:submit={handleSubmit} class="space-y-4 bg-white p-6 rounded-lg shadow-md">
+      <form on:submit={handleSubmit} class="space-y-4 bg-white p-6 rounded-lg shadow-md" autocomplete="off">
         <!-- Barcode ID -->
         <div>
-          <label for="barcodeID" class="block text-sm font-medium text-gray-700 mb-1">Barcode ID *</label>
-          <Dropdown
-            bind:value={formData.barcodeID}
-            placeholder="Search Product By Barcode"
-            required={true}
-            fetchAllItems={getAllProductDropdownAPI}
-            searchItems={searchProducts}
-            getDisplayText={(product: ProductModelDropdown) => product.barcodeId}
-            getValue={(product: ProductModelDropdown) => product.barcodeId}
-            getKey={(product: ProductModelDropdown) => product.barcodeId}
-            on:select={handleProductSelect}
-            on:clear={handleProductClear}
-          />
+          <label for="barcodeID" class="block text-sm font-medium text-gray-700 mb-1">
+            Barcode ID *
+            {#if editingId !== null}
+              <span class="text-xs text-gray-500">(Cannot be changed when editing)</span>
+            {:else if isProductSelectedFromDropdown}
+              <span class="text-xs text-gray-500">(Selected from existing product)</span>
+            {/if}
+          </label>
+          
+          <!-- ✅ Added key prop to force reload -->
+          {#key dropdownKey}
+            <Dropdown
+              bind:value={formData.barcodeID}
+              placeholder={editingId !== null || isProductSelectedFromDropdown ? "Barcode (locked)" : "Search or type barcode ID"}
+              required={true}
+              readonly={editingId !== null || isProductSelectedFromDropdown}
+              fetchAllItems={getAllProductDropdownAPI}
+              searchItems={searchProducts}
+              getDisplayText={(product: ProductModelDropdown) => `${product.barcodeId} - ${product.title}`}
+              getValue={(product: ProductModelDropdown) => product.barcodeId || ""}
+              getKey={(product: ProductModelDropdown) => product.barcodeId || ""}
+              on:select={handleProductSelect}
+              on:clear={handleProductClear}
+            />
+          {/key}
+
+          <!-- Show "Change Product" button when product selected (not editing) -->
+          {#if isProductSelectedFromDropdown && editingId === null}
+            <button
+              type="button"
+              on:click={handleProductClear}
+              class="mt-2 text-sm text-blue-600 hover:text-blue-800 underline focus:outline-none"
+            >
+              Change Product
+            </button>
+          {/if}
         </div>
 
         <!-- Title Product -->
         <div>
-          <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Product Title *</label>
+          <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+            Product Title *
+            {#if isProductSelectedFromDropdown}
+              <span class="text-xs text-gray-500">(Auto-filled from selected product)</span>
+            {/if}
+          </label>
           <input
             id="title"
             type="text"
             bind:value={formData.title}
             required
+            disabled={isProductSelectedFromDropdown}
             autocomplete="off"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="Enter product title"
           />
         </div>
@@ -251,9 +299,9 @@
             required
             min="0"
             step="0.01"
+            autocomplete="off"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="0.00"
-            autocomplete="off"
           />
         </div>
 
@@ -271,7 +319,9 @@
             {/if}
           </button>
 
-          {#if editingId}
+          <!-- Show Reset/Cancel button for both adding and editing -->
+          {#if editingId !== null}
+            <!-- Cancel button when editing -->
             <button
               type="button"
               on:click={resetForm}
@@ -279,6 +329,16 @@
               class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               Cancel
+            </button>
+          {:else if formData.barcodeID || formData.title || formData.quantityType || formData.amount > 0}
+            <!-- Reset button when adding (and form has data) -->
+            <button
+              type="button"
+              on:click={resetForm}
+              disabled={loading}
+              class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              Reset
             </button>
           {/if}
         </div>
