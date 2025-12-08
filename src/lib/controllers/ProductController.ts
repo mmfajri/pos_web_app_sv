@@ -188,3 +188,52 @@ export async function deleteProduct(id: number): Promise<void> {
 		throw error;
 	}
 }
+
+export interface PaginatedRequest {
+  sortColumn?: string;
+  sortColumnDir?: 'asc' | 'desc';
+  rowsPerPage?: number;
+  pageNumber?: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  totalRecords: number;
+  currentPage: number;
+  totalPages: number;
+}
+
+// New paginated API function
+export async function getAllProductsPaginated(
+  params: PaginatedRequest
+): Promise<PaginatedResponse<Product>> {
+  try {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    
+    if (params.sortColumn) queryParams.append('sortColumn', params.sortColumn);
+    if (params.sortColumnDir) queryParams.append('sortColumnDir', params.sortColumnDir);
+    if (params.rowsPerPage) queryParams.append('rowsPerPage', params.rowsPerPage.toString());
+    if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
+
+    const url = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/Paginated?${queryParams.toString()}`;
+    
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch products: ${response.status}`);
+    }
+
+    const apiResponse: ApiResponse<PaginatedResponse<Product>> = await response.json();
+
+    return apiResponse.data || {
+      data: [],
+      totalRecords: 0,
+      currentPage: 1,
+      totalPages: 0,
+    };
+  } catch (error) {
+    console.error("Error fetching paginated products:", error);
+    throw error;
+  }
+}
