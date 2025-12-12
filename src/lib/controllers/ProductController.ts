@@ -194,6 +194,7 @@ export interface PaginatedRequest {
 	sortColumnDir?: 'asc' | 'desc';
 	rowsPerPage?: number;
 	pageNumber?: number;
+	barcodeID?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -223,6 +224,7 @@ export async function getAllProductsPaginated(
 		if (params.sortColumnDir) queryParams.append('sortColumnDir', params.sortColumnDir);
 		if (params.rowsPerPage) queryParams.append('rowsPerPage', params.rowsPerPage.toString());
 		if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
+		if (params.barcodeID) queryParams.append('barcodeID', params.barcodeID);
 
 		const url = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}?${queryParams.toString()}`;
 		console.log("[getAllProductsPaginated] Request URL:", url);

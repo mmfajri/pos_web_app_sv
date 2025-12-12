@@ -58,6 +58,7 @@
   let totalRecords: number = 0;
   let currentPage: number = 1;
   let rowsPerPage: number = 10;
+  let searchBarcodeID: string = "";
   
   let sortColumn: string = "";
   let sortColumnDir: 'asc' | 'desc' = 'asc';
@@ -85,6 +86,7 @@
         sortColumnDir,
         rowsPerPage,
         pageNumber: currentPage,
+        barcodeID: searchBarcodeID || undefined,
       });
 
       console.log("[fetchProducts] API response:", response);
@@ -108,6 +110,19 @@
       console.log("[fetchProducts] FINALLY - tableLoading = false");
       tableLoading = false;
       console.log("[fetchProducts] END - tableLoading is now:", tableLoading);
+    }
+  }
+
+  // Handle search
+  function handleSearch() {
+    currentPage = 1; // Reset to first page when searching
+    fetchProducts();
+  }
+
+  // Handle search on Enter key
+  function handleSearchKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      handleSearch();
     }
   }
 
@@ -400,6 +415,35 @@
     <!-- Right Section - Product List with DataTable -->
     <div class="flex-1">
       <h2 class="text-2xl font-semibold mb-4">Product List</h2>
+
+      <!-- Search Bar -->
+      <div class="mb-4 flex gap-2">
+        <input
+          type="text"
+          bind:value={searchBarcodeID}
+          on:keydown={handleSearchKeydown}
+          placeholder="Search by Barcode ID..."
+          class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="button"
+          on:click={handleSearch}
+          disabled={tableLoading}
+          class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+        >
+          Search
+        </button>
+        {#if searchBarcodeID}
+          <button
+            type="button"
+            on:click={() => { searchBarcodeID = ''; handleSearch(); }}
+            disabled={tableLoading}
+            class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          >
+            Clear
+          </button>
+        {/if}
+      </div>
 
       <DataTable
         {columns}
