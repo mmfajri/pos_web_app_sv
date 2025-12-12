@@ -43,10 +43,29 @@
     paramsChange: DataTableParams;
   }>();
 
+  // ✅ Set default sortColumn to first column if not provided
+  let isInitialized = false;
+
+  $: if (!isInitialized && columns.length > 0 && !sortColumn) {
+    sortColumn = String(columns[0].key);
+    isInitialized = true;
+    // Use setTimeout to avoid triggering during initialization
+    setTimeout(() => {
+      emitParamsChange();
+    }, 0);
+  }
+
   // Computed values
   $: totalPages = Math.ceil(totalRecords / rowsPerPage);
   $: startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
   $: endRecord = Math.min(currentPage * rowsPerPage, totalRecords);
+
+  // Debug reactive data changes
+  $: console.log("[DataTable] Data received:", data);
+  $: console.log("[DataTable] Data length:", data?.length);
+  $: console.log("[DataTable] totalRecords:", totalRecords);
+  $: console.log("[DataTable] currentPage:", currentPage);
+  $: console.log("[DataTable] loading:", loading);
 
   // Pagination range
   $: paginationRange = getPaginationRange(currentPage, totalPages);
