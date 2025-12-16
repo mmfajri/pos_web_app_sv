@@ -3,7 +3,6 @@
   import Dropdown from "$lib/components/dropdown.svelte";
   import DataTable, { type Column, type DataTableParams } from "$lib/components/DataTable.svelte";
   import { logout } from "$lib/utils/logout";
-  import { onMount } from "svelte";
   import { getAllUnitsDropdown, getUnitsByNameDropdown, type Unit } from "$lib/controllers/UnitController";
   import {
     createProduct as createProductAPI,
@@ -17,7 +16,7 @@
   } from "$lib/controllers/ProductController";
 
   let error: string | null = null;
-  let formLoading: boolean = false;  // For form operations (create, update, delete)
+  let formLoading: boolean = false; // For form operations (create, update, delete)
   let tableLoading: boolean = false; // For table data loading
 
   // Form data
@@ -30,26 +29,26 @@
 
   // DataTable columns configuration
   const columns: Column<Product>[] = [
-    { 
-      key: 'barcodeID', 
-      label: 'Barcode ID', 
-      sortable: true 
-    },
-    { 
-      key: 'title', 
-      label: 'Product Title', 
-      sortable: true 
-    },
-    { 
-      key: 'quantityType', 
-      label: 'Quantity Type', 
-      sortable: true 
-    },
-    { 
-      key: 'amount', 
-      label: 'Amount', 
+    {
+      key: "barcodeID",
+      label: "Barcode ID",
       sortable: true,
-      format: (value: number) => `$${value.toFixed(2)}`
+    },
+    {
+      key: "title",
+      label: "Product Title",
+      sortable: true,
+    },
+    {
+      key: "quantityType",
+      label: "Quantity Type",
+      sortable: true,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      sortable: true,
+      format: (value: number) => `$${value.toFixed(2)}`,
     },
   ];
 
@@ -59,10 +58,10 @@
   let currentPage: number = 1;
   let rowsPerPage: number = 10;
   let searchBarcodeID: string = "";
-  
+
   let sortColumn: string = "";
-  let sortColumnDir: 'asc' | 'desc' = 'asc';
-  
+  let sortColumnDir: "asc" | "desc" = "asc";
+
   let editingId: number | null = null;
   let isProductSelectedFromDropdown: boolean = false;
   let dropdownKey: number = 0;
@@ -72,7 +71,7 @@
     console.log("[fetchProducts] START - tableLoading = true");
     tableLoading = true;
     error = null;
-    
+
     try {
       console.log("[fetchProducts] API params:", {
         sortColumn,
@@ -80,7 +79,7 @@
         rowsPerPage,
         pageNumber: currentPage,
       });
-      
+
       const response = await getAllProductsPaginated({
         sortColumn,
         sortColumnDir,
@@ -92,11 +91,11 @@
       console.log("[fetchProducts] API response:", response);
       console.log("[fetchProducts] response.data:", response.data);
       console.log("[fetchProducts] response.data type:", typeof response.data, Array.isArray(response.data));
-      
+
       products = response.data;
       totalRecords = response.totalRecords;
       currentPage = response.currentPage;
-      
+
       console.log("[fetchProducts] Products assigned:", products);
       console.log("[fetchProducts] Products length:", products.length);
       console.log("[fetchProducts] totalRecords:", totalRecords);
@@ -121,7 +120,7 @@
 
   // Handle search on Enter key
   function handleSearchKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
+    if (event.key === "Enter") {
       handleSearch();
     }
   }
@@ -134,7 +133,7 @@
     sortColumnDir = params.sortColumnDir;
     rowsPerPage = params.rowsPerPage;
     currentPage = params.pageNumber;
-    
+
     console.log("[handleTableParamsChange] Calling fetchProducts");
     fetchProducts();
   }
@@ -227,7 +226,7 @@
 
   function editProduct(product: Product) {
     formData = { ...product };
-    editingId = product.id!;
+    editingId = product.priceID!;
   }
 
   async function deleteProduct(id: number) {
@@ -292,11 +291,13 @@
               <span class="text-xs text-gray-500">(Selected from existing product)</span>
             {/if}
           </label>
-          
+
           {#key dropdownKey}
             <Dropdown
               bind:value={formData.barcodeID}
-              placeholder={editingId !== null || isProductSelectedFromDropdown ? "Barcode (locked)" : "Search or type barcode ID"}
+              placeholder={editingId !== null || isProductSelectedFromDropdown
+                ? "Barcode (locked)"
+                : "Search or type barcode ID"}
               required={true}
               readonly={editingId !== null || isProductSelectedFromDropdown}
               fetchAllItems={getAllProductDropdownAPI}
@@ -436,7 +437,10 @@
         {#if searchBarcodeID}
           <button
             type="button"
-            on:click={() => { searchBarcodeID = ''; handleSearch(); }}
+            on:click={() => {
+              searchBarcodeID = "";
+              handleSearch();
+            }}
             disabled={tableLoading}
             class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
@@ -454,7 +458,7 @@
         bind:sortColumn
         bind:sortColumnDir
         loading={tableLoading}
-        getRowKey={(row) => row.id || 0}
+        getRowKey={(row, index) => row.priceID ?? `temp-${index}`}
         on:paramsChange={handleTableParamsChange}
       >
         <!-- Custom actions column -->
@@ -469,7 +473,7 @@
                 Edit
               </button>
               <button
-                on:click={() => deleteProduct(row.id!)}
+                on:click={() => deleteProduct(row.priceID!)}
                 disabled={formLoading}
                 class="text-red-600 hover:text-red-900 font-medium disabled:text-red-300 disabled:cursor-not-allowed"
               >
@@ -483,7 +487,12 @@
         <svelte:fragment slot="empty">
           <div class="flex flex-col items-center gap-2 py-8">
             <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
             </svg>
             <p class="text-lg font-medium">No products found</p>
             <p class="text-sm text-gray-500">Add your first product using the form on the left</p>

@@ -2,7 +2,7 @@ import { API_BASE_URL, API_ENDPOINTS, API_STATUS_CODE } from "$lib/utils/const_v
 import type { ApiResponse } from "$lib/utils/ApiResponse";
 
 export interface Product {
-	id?: number;
+	priceID?: number;
 	barcodeID: string;
 	title: string;
 	quantityType: string;
@@ -10,7 +10,7 @@ export interface Product {
 }
 
 export interface ProductModel {
-	id?: number;
+	priceId?: number;
 	barcodeId: string;
 	title: string;
 	quantityType: string;
@@ -99,7 +99,7 @@ export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 
 		// Map API response to Product interface
 		const products: Product[] = (apiResponse.data || []).map(item => ({
-			id: item.id,
+			id: item.priceId,
 			barcodeID: item.barcodeId,
 			title: item.title,
 			quantityType: item.quantityType,  // Map 'unit' to 'quantityType'
@@ -146,7 +146,7 @@ export async function createProduct(product: Product): Promise<ApiResponse> {
 export async function updateProduct(product: Product): Promise<ApiResponse> {
 	try {
 		const updateProductModel: ProductModel = {
-			id: product.id,
+			priceId: product.priceID,
 			barcodeId: product.barcodeID,
 			title: product.title,
 			quantityType: product.quantityType,
@@ -251,7 +251,7 @@ export async function getAllProductsPaginated(
 
 		// Map ProductModel[] to Product[]
 		const products: Product[] = (backendData.dataTable || []).map(item => ({
-			id: item.id,
+			id: item.priceId,
 			barcodeID: item.barcodeId,
 			title: item.title,
 			quantityType: item.quantityType,
