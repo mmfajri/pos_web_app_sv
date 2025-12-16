@@ -2,7 +2,7 @@ import { API_BASE_URL, API_ENDPOINTS, API_STATUS_CODE } from "$lib/utils/const_v
 import type { ApiResponse } from "$lib/utils/ApiResponse";
 
 export interface Product {
-	id?: number;
+	priceID?: number;
 	barcodeID: string;
 	title: string;
 	quantityType: string;
@@ -10,7 +10,7 @@ export interface Product {
 }
 
 export interface ProductModel {
-	id?: number;
+	priceId?: number;
 	barcodeId: string;
 	title: string;
 	quantityType: string;
@@ -99,7 +99,7 @@ export async function getAllProducts(barcodeID?: string): Promise<Product[]> {
 
 		// Map API response to Product interface
 		const products: Product[] = (apiResponse.data || []).map(item => ({
-			id: item.id,
+			id: item.priceId,
 			barcodeID: item.barcodeId,
 			title: item.title,
 			quantityType: item.quantityType,  // Map 'unit' to 'quantityType'
@@ -146,7 +146,7 @@ export async function createProduct(product: Product): Promise<ApiResponse> {
 export async function updateProduct(product: Product): Promise<ApiResponse> {
 	try {
 		const updateProductModel: ProductModel = {
-			id: product.id,
+			priceId: product.priceID,
 			barcodeId: product.barcodeID,
 			title: product.title,
 			quantityType: product.quantityType,
@@ -185,6 +185,87 @@ export async function deleteProduct(id: number): Promise<void> {
 		}
 	} catch (error) {
 		console.error("Error deleting product:", error);
+		throw error;
+	}
+}
+
+export interface PaginatedRequest {
+	sortColumn?: string;
+	sortColumnDir?: 'asc' | 'desc';
+	rowsPerPage?: number;
+	pageNumber?: number;
+	barcodeID?: string;
+}
+
+export interface PaginatedResponse<T> {
+	data: T[];
+	totalRecords: number;
+	currentPage: number;
+	totalPages: number;
+}
+
+// Backend pagination response structure
+interface BackendPaginatedResponse {
+	totalRecord: number;
+	currentPage: number;
+	totalPage: number;
+	dataTable: ProductModel[];
+}
+
+// New paginated API function
+export async function getAllProductsPaginated(
+	params: PaginatedRequest
+): Promise<PaginatedResponse<Product>> {
+	try {
+		// Build query parameters
+		const queryParams = new URLSearchParams();
+
+		if (params.sortColumn) queryParams.append('sortColumn', params.sortColumn);
+		if (params.sortColumnDir) queryParams.append('sortColumnDir', params.sortColumnDir);
+		if (params.rowsPerPage) queryParams.append('rowsPerPage', params.rowsPerPage.toString());
+		if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
+		if (params.barcodeID) queryParams.append('barcodeID', params.barcodeID);
+
+		const url = `${API_BASE_URL}${API_ENDPOINTS.PRODUCT}?${queryParams.toString()}`;
+		console.log("[getAllProductsPaginated] Request URL:", url);
+
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			throw new Error(`Failed to fetch products: ${response.status}`);
+		}
+
+		const apiResponse: ApiResponse<BackendPaginatedResponse> = await response.json();
+		console.log("[getAllProductsPaginated] Raw API response:", apiResponse);
+
+		const backendData = apiResponse.data;
+
+		if (!backendData) {
+			return {
+				data: [],
+				totalRecords: 0,
+				currentPage: 1,
+				totalPages: 0,
+			};
+		}
+
+		// Map ProductModel[] to Product[]
+		const products: Product[] = (backendData.dataTable || []).map(item => ({
+			id: item.priceId,
+			barcodeID: item.barcodeId,
+			title: item.title,
+			quantityType: item.quantityType,
+			amount: item.amount
+		}));
+
+		return {
+			data: products,
+			totalRecords: backendData.totalRecord,
+			currentPage: backendData.currentPage,
+			totalPages: backendData.totalPage,
+		};
+	} catch (error) {
+		console.error("Error fetching paginated products:", error);
 		throw error;
 	}
 }
