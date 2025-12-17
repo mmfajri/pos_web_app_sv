@@ -1,25 +1,24 @@
 <script lang="ts">
-  import type { Product } from "$lib/models/Product";
   import type { TransactionItem } from "$lib/models/TransactionItems";
   import { logout } from "$lib/utils/logout";
   import Navbar from "$lib/components/Navbar.svelte";
-  import { addItemByCode, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/TransactionController";
+  import { addItemByCode, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/InvoiceController";
 
   let invoiceDate = $state(new Date());
   let codeInput = $state("");
 
-  const products: Product[] = [
-    { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
-    { code: "B456", description: "Pen", price: 0.99, category: "PENS", product_name: "2B Exam Pencil" },
-  ];
+  // const products: Product[] = [
+  //   { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
+  //   { code: "B456", description: "Pen", price: 0.99, category: "PENS", product_name: "2B Exam Pencil" },
+  // ];
 
   let items = $state<TransactionItem[]>([]);
 
   const subtotal = $derived(() => getSubtotal(items).toFixed(2));
 
-  function handleAdd() {
-    const updated = addItemByCode(products, items, codeInput);
-    if (updated.length !== items.length) {
+  async function handleAdd() {
+    const updated = await addItemByCode(items, codeInput);
+    if (updated !== null && updated.length !== items.length) {
       items = updated;
       codeInput = "";
     } else {
@@ -68,9 +67,10 @@
       <table class="min-w-full text-sm">
         <thead class="bg-gray-100 sticky top-0">
           <tr>
-            <th class="border px-2 py-1 text-left">Code</th>
-            <th class="border px-2 py-1 text-left">Product Name</th>
+            <th class="border px-2 py-1 text-left">Barcode</th>
+            <th class="border px-2 py-1 text-left">Title</th>
             <th class="border px-2 py-1 text-right">Qty</th>
+            <th class="border px-2 py-1 text-right">QuantityType</th>
             <th class="border px-2 py-1 text-right">Price</th>
             <th class="border px-2 py-1 text-right">Amount</th>
             <th class="border px-2 py-1 text-center">Action</th>
@@ -79,8 +79,9 @@
         <tbody>
           {#each items as item, index}
             <tr>
-              <td class="border px-2 py-1">{item.code}</td>
-              <td class="border px-2 py-1">{item.product_name}</td>
+              <td class="border px-2 py-1">{item.barcodeId}</td>
+              <td class="border px-2 py-1">{item.title}</td>
+              <td class="border px-2 py-1">{item.quantityType}</td>
               <td class="border px-2 py-1 text-right">
                 <input
                   type="number"
@@ -91,7 +92,7 @@
                 />
               </td>
               <td class="border px-2 py-1 text-right">${item.price.toFixed(2)}</td>
-              <td class="border px-2 py-1 text-right">${item.amount.toFixed(2)}</td>
+              <td class="border px-2 py-1 text-right">${item.totalPrice.toFixed(2)}</td>
               <td class="border px-2 py-1 text-center">
                 <button
                   onclick={() => handleRemove(index)}

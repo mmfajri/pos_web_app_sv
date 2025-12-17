@@ -1,10 +1,25 @@
 export type TransactionItem = {
-	code: string;
-	product_name?: string;
-	category?: string;
+	barcodeId: string;
+	title: string;
+	quantityType: string;
 	quantity: number;
 	price: number;
-	amount: number;
-	discount?: number;
+	totalPrice: number;
+	discount: number;
 	taxable: boolean;
+	listUnit: UnitTransactionItem[];
+}
+
+export type TransactionItemApiModel = {
+	priceId?: number;
+	barcodeId: string;
+	title: string;
+	quantityType: string;
+	amount: number;
+	unitList: UnitTransactionItem[];
+}
+
+export type UnitTransactionItem = {
+	id?: number;
+	name: string;
 }

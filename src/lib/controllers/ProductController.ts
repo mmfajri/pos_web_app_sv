@@ -251,7 +251,7 @@ export async function getAllProductsPaginated(
 
 		// Map ProductModel[] to Product[]
 		const products: Product[] = (backendData.dataTable || []).map(item => ({
-			id: item.priceId,
+			priceID: item.priceId,
 			barcodeID: item.barcodeId,
 			title: item.title,
 			quantityType: item.quantityType,
