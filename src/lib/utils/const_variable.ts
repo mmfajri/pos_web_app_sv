@@ -5,7 +5,8 @@ export const API_ENDPOINTS = {
 	PRODUCT: "/Product",
 	ROLE: "/Role",
 	TRANSACTION: "/Transaction",
-	UNIT: "/Unit"
+	UNIT: "/Unit",
+	INVOICE: "/Invoice"
 } as const
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -15,4 +16,6 @@ export const API_STATUS_CODE = {
 	OK: 200,
 	BAD_REQUEST: 504,
 }
+
+
 
