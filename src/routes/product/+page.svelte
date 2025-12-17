@@ -15,17 +15,18 @@
     type ProductModelDropdown,
   } from "$lib/controllers/ProductController";
 
-  let error: string | null = null;
-  let formLoading: boolean = false; // For form operations (create, update, delete)
-  let tableLoading: boolean = false; // For table data loading
+  // ✅ Using Svelte 5 runes
+  let error = $state<string | null>(null);
+  let formLoading = $state(false); // For form operations (create, update, delete)
+  let tableLoading = $state(false); // For table data loading
 
   // Form data
-  let formData: Product = {
+  let formData = $state<Product>({
     barcodeID: "",
     title: "",
     quantityType: "",
     amount: 0,
-  };
+  });
 
   // DataTable columns configuration
   const columns: Column<Product>[] = [
@@ -53,18 +54,18 @@
   ];
 
   // Product list with pagination
-  let products: Product[] = [];
-  let totalRecords: number = 0;
-  let currentPage: number = 1;
-  let rowsPerPage: number = 10;
-  let searchBarcodeID: string = "";
+  let products = $state<Product[]>([]);
+  let totalRecords = $state(0);
+  let currentPage = $state(1);
+  let rowsPerPage = $state(10);
+  let searchBarcodeID = $state("");
 
-  let sortColumn: string = "";
-  let sortColumnDir: "asc" | "desc" = "asc";
+  let sortColumn = $state("");
+  let sortColumnDir = $state<"asc" | "desc">("asc");
 
-  let editingId: number | null = null;
-  let isProductSelectedFromDropdown: boolean = false;
-  let dropdownKey: number = 0;
+  let editingId = $state<number | null>(null);
+  let isProductSelectedFromDropdown = $state(false);
+  let dropdownKey = $state(0);
 
   // Load products with pagination
   async function fetchProducts() {
