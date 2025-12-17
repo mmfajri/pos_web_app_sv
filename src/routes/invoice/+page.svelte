@@ -2,27 +2,36 @@
   import type { TransactionItem } from "$lib/models/TransactionItems";
   import { logout } from "$lib/utils/logout";
   import Navbar from "$lib/components/Navbar.svelte";
-  import { addItemByCode, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/InvoiceController";
+  import { getItemByBarcodeId, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/InvoiceController";
+
+  import "$lib/styles/no_spinner.css";
 
   let invoiceDate = $state(new Date());
   let codeInput = $state("");
-
-  // const products: Product[] = [
-  //   { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
-  //   { code: "B456", description: "Pen", price: 0.99, category: "PENS", product_name: "2B Exam Pencil" },
-  // ];
-
   let items = $state<TransactionItem[]>([]);
 
   const subtotal = $derived(() => getSubtotal(items).toFixed(2));
 
   async function handleAdd() {
-    const updated = await addItemByCode(items, codeInput);
-    if (updated !== null && updated.length !== items.length) {
-      items = updated;
+    // Check if item already exists in the list
+    const existingIndex = items.findIndex(
+      (item) => item.barcodeId === codeInput && item.quantityType === item.quantityType,
+    );
+
+    if (existingIndex !== -1) {
+      // Item exists - increase quantity by 1
+      const newQuantity = items[existingIndex].quantity + 1;
+      items = updateQuantity(items, existingIndex, newQuantity);
       codeInput = "";
     } else {
-      alert("Product Not Found");
+      // Item doesn't exist - add new item
+      const updated = await getItemByBarcodeId(items, codeInput);
+      if (updated !== null && updated.length !== items.length) {
+        items = updated;
+        codeInput = "";
+      } else {
+        alert("Product Not Found");
+      }
     }
   }
 
@@ -32,6 +41,46 @@
 
   function handleRemove(index: number) {
     items = removeItem(items, index);
+  }
+
+  function handlePriceChange(index: number, newPrice: number) {
+    items = items.map((item, i) => {
+      if (i === index) {
+        const updateTotalPrice = parseFloat((item.quantity * newPrice).toFixed(2));
+        return {
+          ...item,
+          price: newPrice,
+          totalPrice: updateTotalPrice,
+        };
+      }
+      return item;
+    });
+  }
+
+  // Handle unit change - fetch new price for the selected unit
+  async function handleUnitChange(index: number, newUnit: string) {
+    const item = items[index];
+
+    // Call API with the new unit
+    const updated = await getItemByBarcodeId([], item.barcodeId, newUnit);
+
+    if (updated !== null && updated.length > 0) {
+      const newItemData = updated[0];
+
+      // Update the item at the index with new price and unit
+      items[index] = {
+        ...item,
+        quantityType: newItemData.quantityType,
+        price: newItemData.price,
+        totalPrice: item.quantity * newItemData.price,
+        listUnit: newItemData.listUnit,
+      };
+
+      // Trigger reactivity
+      items = items;
+    } else {
+      alert("Failed to update unit");
+    }
   }
 </script>
 
@@ -69,8 +118,8 @@
           <tr>
             <th class="border px-2 py-1 text-left">Barcode</th>
             <th class="border px-2 py-1 text-left">Title</th>
+            <th class="border px-2 py-1 text-left">Unit</th>
             <th class="border px-2 py-1 text-right">Qty</th>
-            <th class="border px-2 py-1 text-right">QuantityType</th>
             <th class="border px-2 py-1 text-right">Price</th>
             <th class="border px-2 py-1 text-right">Amount</th>
             <th class="border px-2 py-1 text-center">Action</th>
@@ -81,7 +130,23 @@
             <tr>
               <td class="border px-2 py-1">{item.barcodeId}</td>
               <td class="border px-2 py-1">{item.title}</td>
-              <td class="border px-2 py-1">{item.quantityType}</td>
+              <td class="border px-2 py-1">
+                {#if item.listUnit && item.listUnit.length > 1}
+                  <!-- Dropdown if multiple units available -->
+                  <select
+                    class="border rounded px-1 py-1 text-sm w-full"
+                    value={item.quantityType}
+                    onchange={(e) => handleUnitChange(index, e.currentTarget.value)}
+                  >
+                    {#each item.listUnit as unit}
+                      <option value={unit.name}>{unit.name}</option>
+                    {/each}
+                  </select>
+                {:else}
+                  <!-- Just display if only one unit -->
+                  <span>{item.quantityType}</span>
+                {/if}
+              </td>
               <td class="border px-2 py-1 text-right">
                 <input
                   type="number"
@@ -91,7 +156,14 @@
                   onchange={() => handleQtyChange(index, item.quantity)}
                 />
               </td>
-              <td class="border px-2 py-1 text-right">${item.price.toFixed(2)}</td>
+              <td class="no-spinner border px-2 py-1 text-right">
+                <input
+                  type="number"
+                  class="max-w-20 text-right"
+                  value={item.price}
+                  onchange={(e) => handlePriceChange(index, parseFloat(e.currentTarget.value))}
+                />
+              </td>
               <td class="border px-2 py-1 text-right">${item.totalPrice.toFixed(2)}</td>
               <td class="border px-2 py-1 text-center">
                 <button

@@ -2,9 +2,8 @@ import type { TransactionItem, TransactionItemApiModel } from "$lib/models/Trans
 import type { ApiResponse } from "$lib/utils/ApiResponse";
 import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
 
-export async function addItemByCode(transactionItems: TransactionItem[], barcodeId: string, unit?: string): Promise<TransactionItem[] | null> {
+export async function getItemByBarcodeId(transactionItems: TransactionItem[], barcodeId: string, unit?: string): Promise<TransactionItem[] | null> {
 	try {
-		debugger;
 		// Calling Api
 		let url = `${API_BASE_URL}${API_ENDPOINTS.INVOICE}/GetProductPriceByBarcode?BarcodeId=${encodeURIComponent(barcodeId)}`
 		if (unit !== undefined) {
