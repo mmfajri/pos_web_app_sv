@@ -156,10 +156,10 @@
                   onchange={() => handleQtyChange(index, item.quantity)}
                 />
               </td>
-              <td class="no-spinner border px-2 py-1 text-right">
+              <td class="border px-2 py-1 text-right">
                 <input
                   type="number"
-                  class="max-w-20 text-right"
+                  class="no-spinner max-w-20 text-right"
                   value={item.price}
                   onchange={(e) => handlePriceChange(index, parseFloat(e.currentTarget.value))}
                 />
