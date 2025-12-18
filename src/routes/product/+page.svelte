@@ -1,8 +1,8 @@
 <script lang="ts">
   import Navbar from "$lib/components/Navbar.svelte";
-  import Dropdown from "$lib/components/dropdown.svelte";
+  import Dropdown from "$lib/components/Dropdown.svelte";
   import DataTable, { type Column, type DataTableParams } from "$lib/components/DataTable.svelte";
-  import { logout } from "$lib/utils/logout";
+  import { logout } from "$lib/utils/Logout";
   import { getAllUnitsDropdown, getUnitsByNameDropdown, type Unit } from "$lib/controllers/UnitController";
   import {
     createProduct as createProductAPI,
@@ -14,6 +14,8 @@
     type Product,
     type ProductModelDropdown,
   } from "$lib/controllers/ProductController";
+
+  import "$lib/styles/no_spinner.css";
 
   // ✅ Using Svelte 5 runes
   let error = $state<string | null>(null);
@@ -369,10 +371,8 @@
             type="number"
             bind:value={formData.amount}
             required
-            min="0"
-            step="0.01"
             autocomplete="off"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="no-spinner w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="0.00"
           />
         </div>

@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { TransactionItem } from "$lib/models/TransactionItems";
-  import { logout } from "$lib/utils/logout";
+  import { logout } from "$lib/utils/Logout";
   import Navbar from "$lib/components/Navbar.svelte";
   import { getItemByBarcodeId, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/InvoiceController";
+  import { DateTimeFormatter } from "$lib/utils/DatetimeFormatter";
 
   import "$lib/styles/no_spinner.css";
 
@@ -11,6 +12,17 @@
   let items = $state<TransactionItem[]>([]);
 
   const subtotal = $derived(() => getSubtotal(items).toFixed(2));
+
+  // ✅ Format for date input (yyyy-MM-dd)
+  const dateInputValue = $derived(() => DateTimeFormatter.toString(invoiceDate, "yyyy-MM-dd"));
+
+  // Realtime Config - Update every second
+  $effect(() => {
+    const interval = setInterval(() => {
+      invoiceDate = new Date();
+    }, 1000);
+    return () => clearInterval(interval);
+  });
 
   async function handleAdd() {
     // Check if item already exists in the list
@@ -90,11 +102,14 @@
   <main class="flex-1 overflow-y-auto p-4">
     <div class="border rounded-lg shadow bg-white w-full">
       <div class="p-4 border-b">
-        <h2 class="text-lg font-semibold">Invoices Date {invoiceDate}</h2>
-        <div class="mt-2 grid grid-cols-2 gap-4 text-sm">
+        <!-- ✅ Display formatted date with time -->
+        <div class="mt-2 grid grid-cols-2 text-sm">
           <div>
             <label for="date-invoice" class="font-medium">Date :</label>
-            <input type="date" bind:value={invoiceDate} class="border rounded px-2 py-1 mt-1" readonly />
+            <!-- ✅ Show date in yyyy-MM-dd format for input -->
+            <input type="date" value={dateInputValue()} class="py-1 mt-1" readonly />
+            ||
+            <input type="text" value={DateTimeFormatter.toString(invoiceDate, "HH:mm:ss")} class="py-1 mt-1" readonly />
           </div>
         </div>
       </div>
@@ -150,7 +165,7 @@
               <td class="border px-2 py-1 text-right">
                 <input
                   type="number"
-                  class="w-16 text-right border px-1 rounded"
+                  class="no-spinner w-16 text-right border px-1 rounded"
                   min="1"
                   bind:value={item.quantity}
                   onchange={() => handleQtyChange(index, item.quantity)}
@@ -159,12 +174,14 @@
               <td class="border px-2 py-1 text-right">
                 <input
                   type="number"
-                  class="no-spinner max-w-20 text-right"
+                  class="no-spinner w-20 text-right border px-1 rounded"
+                  min="0"
+                  step="0.01"
                   value={item.price}
                   onchange={(e) => handlePriceChange(index, parseFloat(e.currentTarget.value))}
                 />
               </td>
-              <td class="border px-2 py-1 text-right">${item.totalPrice.toFixed(2)}</td>
+              <td class="border px-2 py-1 text-right font-semibold">${item.totalPrice.toFixed(2)}</td>
               <td class="border px-2 py-1 text-center">
                 <button
                   onclick={() => handleRemove(index)}
@@ -201,3 +218,16 @@
     </div>
   </footer>
 </div>
+
+<style>
+  /* Remove spinner arrows from number inputs */
+  input[type="number"].no-spinner {
+    -moz-appearance: textfield !important;
+  }
+
+  input[type="number"].no-spinner::-webkit-outer-spin-button,
+  input[type="number"].no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+  }
+</style>

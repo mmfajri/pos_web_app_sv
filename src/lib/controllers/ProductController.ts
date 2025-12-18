@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_ENDPOINTS, API_STATUS_CODE } from "$lib/utils/const_variable";
+import { API_BASE_URL, API_ENDPOINTS, API_STATUS_CODE } from "$lib/utils/ConstVariable";
 import type { ApiResponse } from "$lib/utils/ApiResponse";
 
 export interface Product {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Navbar from "$lib/components/Navbar.svelte";
-  import { logout } from "$lib/utils/logout";
+  import { logout } from "$lib/utils/Logout";
 </script>
 
 <Navbar onLogout={logout}></Navbar>
