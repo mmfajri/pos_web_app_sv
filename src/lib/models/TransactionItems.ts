@@ -10,10 +10,11 @@ export type TransactionItem = {
 	listUnit: UnitTransactionItem[] | string | null;
 }
 
-export type Transaction = {
+export type TransactionInvoice = {
 	transactionDate: string;
 	accountPos: number;
 	totalTransaction: number;
+	payAmount: number;
 	transactionItem: TransactionItem[];
 }
 

@@ -24,6 +24,8 @@
     return () => clearInterval(interval);
   });
 
+  async function SaveInvoice() {}
+
   async function handleAdd() {
     // Check if item already exists in the list
     const existingIndex = items.findIndex(

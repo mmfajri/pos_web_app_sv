@@ -1,6 +1,33 @@
-import type { TransactionItem, TransactionItemApiModel } from "$lib/models/TransactionItems";
+import type { TransactionInvoice, TransactionItem, TransactionItemApiModel } from "$lib/models/TransactionItems";
 import type { ApiResponse } from "$lib/utils/ApiResponse"
 import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/ConstVariable";
+
+export async function saveTransactionInvoice(transactionData: TransactionInvoice): Promise<boolean> {
+	try {
+		let url = `${API_BASE_URL}${API_ENDPOINTS.INVOICE}/SaveInvoiceTransaction`;
+
+		const response = await fetch(url, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(transactionData),
+		});
+
+		const result: ApiResponse = await response.json();
+
+		if (!response.ok) {
+			return false
+			throw new Error(result.message || `Create Transaction Invoice failed with status: ${response.status}`);
+		}
+
+		return true;
+	} catch (error) {
+
+		console.error("Error fetching data:", error);
+		return false;
+	}
+}
 
 export async function getItemByBarcodeId(transactionItems: TransactionItem[], barcodeId: string, unit?: string): Promise<TransactionItem[] | null> {
 	try {
