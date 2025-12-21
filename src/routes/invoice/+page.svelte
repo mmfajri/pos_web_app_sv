@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { TransactionItem } from "$lib/models/TransactionItems";
+  import type { TransactionItem, TransactionInvoice } from "$lib/models/TransactionItems";
   import { logout } from "$lib/utils/logout";
   import Navbar from "$lib/components/Navbar.svelte";
-  import { getItemByBarcodeId, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/InvoiceController";
+  import { getItemByBarcodeId, getSubtotal, removeItem, updateQuantity, saveTransactionInvoice } from "$lib/controllers/InvoiceController";
   import { DateTimeFormatter } from "$lib/utils/DatetimeFormatter";
 
   import "$lib/styles/no_spinner.css";
@@ -10,8 +10,10 @@
   let invoiceDate = $state(new Date());
   let codeInput = $state("");
   let items = $state<TransactionItem[]>([]);
+  let payAmount = $state(0);
 
   const subtotal = $derived(() => getSubtotal(items).toFixed(2));
+  const changeAmount = $derived(() => (payAmount - parseFloat(subtotal())).toFixed(2));
 
   // ✅ Format for date input (yyyy-MM-dd)
   const dateInputValue = $derived(() => DateTimeFormatter.toString(invoiceDate, "yyyy-MM-dd"));
@@ -24,12 +26,50 @@
     return () => clearInterval(interval);
   });
 
-  async function SaveInvoice() {}
+  async function SaveInvoice() {
+    if (items.length === 0) {
+      alert("No items to save");
+      return;
+    }
+
+    if (payAmount < parseFloat(subtotal())) {
+      alert("Pay amount must be greater than or equal to total");
+      return;
+    }
+
+    // Convert listUnit array to comma-separated string for each item
+    const itemsToSave: TransactionItem[] = items.map(item => ({
+      ...item,
+      listUnit: Array.isArray(item.listUnit) 
+        ? item.listUnit.map(u => u.name).join(',')
+        : item.listUnit
+    }));
+
+    const transactionData: TransactionInvoice = {
+      transactionDate: DateTimeFormatter.toString(invoiceDate, "yyyy-MM-dd HH:mm:ss"),
+      accountPos: 1, // You may want to make this dynamic
+      totalTransaction: parseFloat(subtotal()),
+      payAmount: payAmount,
+      transactionItem: itemsToSave
+    };
+
+    const success = await saveTransactionInvoice(transactionData);
+    
+    if (success) {
+      alert("Invoice saved successfully!");
+      // Clear the form
+      items = [];
+      codeInput = "";
+      payAmount = 0;
+    } else {
+      alert("Failed to save invoice");
+    }
+  }
 
   async function handleAdd() {
-    // Check if item already exists in the list
+    // Check if item already exists in the list with same barcode
     const existingIndex = items.findIndex(
-      (item) => item.barcodeId === codeInput && item.quantityType === item.quantityType,
+      (item) => item.barcodeId === codeInput,
     );
 
     if (existingIndex !== -1) {
@@ -202,8 +242,16 @@
 
   <!-- Footer -->
   <footer class="bg-gray-100 border-t border-gray-300 p-4 shadow-inner sticky bottom-0 z-10">
-    <div class="flex justify-end space-x-8 text-right">
+    <div class="flex justify-between items-end">
       <div>
+        <button 
+          onclick={SaveInvoice}
+          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded shadow"
+        >
+          Save Invoice
+        </button>
+      </div>
+      <div class="space-y-2 text-right">
         <div>
           Subtotal : <strong>${subtotal()}</strong>
         </div>
@@ -213,8 +261,22 @@
         <div>
           Tax: <strong>0%</strong>
         </div>
-        <div class="text-lg mt-2">
+        <div class="text-lg mt-2 border-t pt-2">
           Total: <strong class="text-xl">${subtotal()}</strong>
+        </div>
+        <div class="flex items-center justify-end gap-2 mt-2">
+          <label class="font-medium">Pay Amount:</label>
+          <input
+            type="number"
+            class="no-spinner border rounded px-3 py-1 w-32 text-right"
+            min="0"
+            step="0.01"
+            bind:value={payAmount}
+            placeholder="0.00"
+          />
+        </div>
+        <div class="text-lg {parseFloat(changeAmount()) < 0 ? 'text-red-600' : 'text-green-600'}">
+          Change: <strong>${changeAmount()}</strong>
         </div>
       </div>
     </div>
