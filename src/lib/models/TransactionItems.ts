@@ -7,7 +7,14 @@ export type TransactionItem = {
 	totalPrice: number;
 	discount: number;
 	taxable: boolean;
-	listUnit: UnitTransactionItem[];
+	listUnit: UnitTransactionItem[] | string | null;
+}
+
+export type Transaction = {
+	transactionDate: string;
+	accountPos: number;
+	totalTransaction: number;
+	transactionItem: TransactionItem[];
 }
 
 export type TransactionItemApiModel = {

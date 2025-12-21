@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TransactionItem } from "$lib/models/TransactionItems";
-  import { logout } from "$lib/utils/Logout";
+  import { logout } from "$lib/utils/logout";
   import Navbar from "$lib/components/Navbar.svelte";
   import { getItemByBarcodeId, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/InvoiceController";
   import { DateTimeFormatter } from "$lib/utils/DatetimeFormatter";
