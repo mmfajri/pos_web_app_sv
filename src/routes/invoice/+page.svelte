@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TransactionItem, TransactionInvoice } from "$lib/models/TransactionItems";
+  import type { TransactionItem, TransactionInvoice, TransactionItemApiModel } from "$lib/models/TransactionItems";
   import { logout } from "$lib/utils/LogoutHandler";
   import Navbar from "$lib/components/Navbar.svelte";
   import {
@@ -38,23 +38,26 @@
       return;
     }
 
-    if (payAmount < parseFloat(subtotal())) {
-      alert("Pay amount must be greater than or equal to total");
-      return;
-    }
+    // if (payAmount < parseFloat(subtotal())) {
+    //   alert("Pay amount must be greater than or equal to total");
+    //   return;
+    // }
 
     // Convert listUnit array to comma-separated string for each item
-    const itemsToSave: TransactionItem[] = items.map((item) => ({
-      ...item,
-      listUnit: Array.isArray(item.listUnit) ? item.listUnit.map((u) => u.name).join(",") : item.listUnit,
-    }));
+    // const itemsToSave: TransactionItem[] = items.map((item) => ({
+    //   ...item,
+    //   listUnit: Array.isArray(item.listUnitItem) ? item.listUnitItem.map((u) => u.name).join(",") : item.listUnitItem,
+    // }));
+
+    const itemsToSave: TransactionItemApiModel[] = items.map((item) => ({}));
+    // Convert from TransactionItem to TransactionItemApiModel
 
     const transactionData: TransactionInvoice = {
       transactionDate: DateTimeFormatter.toString(invoiceDate, "yyyy-MM-dd HH:mm:ss"),
       accountPos: 1, // You may want to make this dynamic
       totalTransaction: parseFloat(subtotal()),
       payAmount: payAmount,
-      transactionItem: itemsToSave,
+      listTransactionItem: itemsToSave,
     };
 
     const success = await saveTransactionInvoice(transactionData);
@@ -123,7 +126,7 @@
         quantityType: newItemData.quantityType,
         price: newItemData.price,
         totalPrice: item.quantity * newItemData.price,
-        listUnit: newItemData.listUnit,
+        listUnitItem: newItemData.listUnitItem,
       };
 
       // Trigger reactivity
@@ -184,14 +187,14 @@
               <td class="border px-2 py-1">{item.barcodeId}</td>
               <td class="border px-2 py-1">{item.title}</td>
               <td class="border px-2 py-1">
-                {#if item.listUnit && item.listUnit.length > 1}
+                {#if item.listUnitItem && item.listUnitItem.length > 1}
                   <!-- Dropdown if multiple units available -->
                   <select
                     class="border rounded px-1 py-1 text-sm w-full"
                     value={item.quantityType}
                     onchange={(e) => handleUnitChange(index, e.currentTarget.value)}
                   >
-                    {#each item.listUnit as unit}
+                    {#each item.listUnitItem as unit}
                       <option value={getUnitName(unit)}>{getUnitName(unit)}</option>
                     {/each}
                   </select>

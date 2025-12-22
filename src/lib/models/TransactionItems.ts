@@ -7,7 +7,7 @@ export type TransactionItem = {
 	totalPrice: number;
 	discount: number;
 	taxable: boolean;
-	listUnit: UnitTransactionItem[] | string | null;
+	listUnitItem: UnitTransactionItem[] | string | null;
 }
 
 export type TransactionInvoice = {
@@ -15,7 +15,19 @@ export type TransactionInvoice = {
 	accountPos: number;
 	totalTransaction: number;
 	payAmount: number;
-	transactionItem: TransactionItem[];
+	listTransactionItem: TransactionItemApiModel[];
+}
+
+export type ListTransactionItemInvoice = {
+	barcodeId: string;
+	title: string;
+	quantityType: string;
+	quantity: number;
+	price: number;
+	totalPrice: number;
+	discount: number;
+	taxable: boolean;
+	listUnitItem: UnitTransactionItem[] | string | null;
 }
 
 export type TransactionItemApiModel = {
