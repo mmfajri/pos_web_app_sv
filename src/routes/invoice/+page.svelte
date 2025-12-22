@@ -71,23 +71,13 @@
   }
 
   async function handleAdd() {
-    // Check if item already exists in the list with same barcode
-    const existingIndex = items.findIndex((item) => item.barcodeId === codeInput);
-
-    if (existingIndex !== -1) {
-      // Item exists - increase quantity by 1
-      const newQuantity = items[existingIndex].quantity + 1;
-      items = updateQuantity(items, existingIndex, newQuantity);
+    // Item doesn't exist - add new item
+    const updated = await getItemByBarcodeId(items, codeInput);
+    if (updated !== null && updated.length !== items.length) {
+      items = updated;
       codeInput = "";
     } else {
-      // Item doesn't exist - add new item
-      const updated = await getItemByBarcodeId(items, codeInput);
-      if (updated !== null && updated.length !== items.length) {
-        items = updated;
-        codeInput = "";
-      } else {
-        alert("Product Not Found");
-      }
+      alert("Product Not Found");
     }
   }
 
