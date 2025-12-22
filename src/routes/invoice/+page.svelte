@@ -1,8 +1,14 @@
 <script lang="ts">
   import type { TransactionItem, TransactionInvoice } from "$lib/models/TransactionItems";
-  import { logout } from "$lib/utils/logout";
+  import { logout } from "$lib/utils/LogoutHandler";
   import Navbar from "$lib/components/Navbar.svelte";
-  import { getItemByBarcodeId, getSubtotal, removeItem, updateQuantity, saveTransactionInvoice } from "$lib/controllers/InvoiceController";
+  import {
+    getItemByBarcodeId,
+    getSubtotal,
+    removeItem,
+    updateQuantity,
+    saveTransactionInvoice,
+  } from "$lib/controllers/InvoiceController";
   import { DateTimeFormatter } from "$lib/utils/DatetimeFormatter";
 
   import "$lib/styles/no_spinner.css";
@@ -38,11 +44,9 @@
     }
 
     // Convert listUnit array to comma-separated string for each item
-    const itemsToSave: TransactionItem[] = items.map(item => ({
+    const itemsToSave: TransactionItem[] = items.map((item) => ({
       ...item,
-      listUnit: Array.isArray(item.listUnit) 
-        ? item.listUnit.map(u => u.name).join(',')
-        : item.listUnit
+      listUnit: Array.isArray(item.listUnit) ? item.listUnit.map((u) => u.name).join(",") : item.listUnit,
     }));
 
     const transactionData: TransactionInvoice = {
@@ -50,11 +54,11 @@
       accountPos: 1, // You may want to make this dynamic
       totalTransaction: parseFloat(subtotal()),
       payAmount: payAmount,
-      transactionItem: itemsToSave
+      transactionItem: itemsToSave,
     };
 
     const success = await saveTransactionInvoice(transactionData);
-    
+
     if (success) {
       alert("Invoice saved successfully!");
       // Clear the form
@@ -68,9 +72,7 @@
 
   async function handleAdd() {
     // Check if item already exists in the list with same barcode
-    const existingIndex = items.findIndex(
-      (item) => item.barcodeId === codeInput,
-    );
+    const existingIndex = items.findIndex((item) => item.barcodeId === codeInput);
 
     if (existingIndex !== -1) {
       // Item exists - increase quantity by 1
@@ -87,6 +89,10 @@
         alert("Product Not Found");
       }
     }
+  }
+
+  function getUnitName(unit: string | { name: string }): string {
+    return typeof unit === "string" ? unit : unit.name;
   }
 
   function handleQtyChange(index: number, qty: number) {
@@ -196,7 +202,7 @@
                     onchange={(e) => handleUnitChange(index, e.currentTarget.value)}
                   >
                     {#each item.listUnit as unit}
-                      <option value={unit.name}>{unit.name}</option>
+                      <option value={getUnitName(unit)}>{getUnitName(unit)}</option>
                     {/each}
                   </select>
                 {:else}
@@ -207,7 +213,7 @@
               <td class="border px-2 py-1 text-right">
                 <input
                   type="number"
-                  class="no-spinner w-16 text-right border px-1 rounded"
+                  class="w-16 text-right border px-1 rounded"
                   min="1"
                   bind:value={item.quantity}
                   onchange={() => handleQtyChange(index, item.quantity)}
@@ -244,7 +250,7 @@
   <footer class="bg-gray-100 border-t border-gray-300 p-4 shadow-inner sticky bottom-0 z-10">
     <div class="flex justify-between items-end">
       <div>
-        <button 
+        <button
           onclick={SaveInvoice}
           class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded shadow"
         >
