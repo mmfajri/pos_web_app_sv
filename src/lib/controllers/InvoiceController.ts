@@ -1,4 +1,4 @@
-import type { TransactionInvoice, TransactionItem, TransactionItemApiModel } from "$lib/models/TransactionItems";
+import type { TransactionInvoice, TransactionItem, TransactionItemApiModel } from "$lib/models/Transaction";
 import type { ApiResponse } from "$lib/utils/ApiResponse";
 import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/ConstVariable";
 
@@ -59,8 +59,8 @@ export async function getItemByBarcodeId(
 				title: data.title,
 				quantityType: data.quantityType,
 				quantity: 1,
-				price: data.amount,
-				totalPrice: data.amount,
+				price: data.price,
+				totalPrice: data.totalPrice,
 				discount: 0,
 				taxable: false,
 				listUnitItem: data.unitList,
