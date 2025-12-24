@@ -34,9 +34,11 @@ export type TransactionItemApiModel = {
 	priceId?: number;
 	barcodeId: string;
 	title: string;
+	quantity: number;
 	quantityType: string;
-	amount: number;
-	unitList: UnitTransactionItem[];
+	price: number;
+	totalPrice: number;
+	unitList: UnitTransactionItem[] | string | null;
 }
 
 export type UnitTransactionItem = {

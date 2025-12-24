@@ -49,7 +49,15 @@
     //   listUnit: Array.isArray(item.listUnitItem) ? item.listUnitItem.map((u) => u.name).join(",") : item.listUnitItem,
     // }));
 
-    const itemsToSave: TransactionItemApiModel[] = items.map((item) => ({}));
+    const itemsToSave: TransactionItemApiModel[] = items.map((item) => ({
+      barcodeId: item.barcodeId,
+      title: item.title,
+      quantityType: item.quantityType,
+      quantity: item.quantity,
+      price: item.price,
+      totalPrice: item.totalPrice,
+      unitList: item.listUnitItem?.toString() ?? null,
+    }));
     // Convert from TransactionItem to TransactionItemApiModel
 
     const transactionData: TransactionInvoice = {
