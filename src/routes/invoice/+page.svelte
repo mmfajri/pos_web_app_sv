@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TransactionItem, TransactionInvoice, TransactionItemApiModel } from "$lib/models/TransactionItems";
+  import type { TransactionItem, TransactionInvoice, TransactionItemApiModel } from "$lib/models/Transaction";
   import { logout } from "$lib/utils/LogoutHandler";
   import Navbar from "$lib/components/Navbar.svelte";
   import {
@@ -65,7 +65,7 @@
       accountPos: 1, // You may want to make this dynamic
       totalTransaction: parseFloat(subtotal()),
       payAmount: payAmount,
-      listTransactionItem: itemsToSave,
+      listTransactionItems: itemsToSave,
     };
 
     const success = await saveTransactionInvoice(transactionData);
