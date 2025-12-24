@@ -15,7 +15,7 @@ export type TransactionInvoice = {
 	accountPos: number;
 	totalTransaction: number;
 	payAmount: number;
-	listTransactionItem: TransactionItemApiModel[];
+	listTransactionItems: TransactionItemApiModel[];
 }
 
 export type ListTransactionItemInvoice = {
