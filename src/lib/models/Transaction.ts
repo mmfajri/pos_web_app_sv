@@ -36,7 +36,7 @@ export type TransactionItemApiModel = {
 	title: string;
 	quantity: number;
 	quantityType: string;
-	price: number;
+	amount: number;
 	totalPrice: number;
 	unitList: UnitTransactionItem[] | string | null;
 }

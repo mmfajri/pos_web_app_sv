@@ -50,6 +50,7 @@ export async function getItemByBarcodeId(
 		if (!response.ok) {
 			return null;
 		}
+		debugger;
 
 		const apiResponse: ApiResponse<TransactionItemApiModel> = await response.json();
 		if (apiResponse.data !== undefined && apiResponse.data !== null) {
@@ -59,8 +60,8 @@ export async function getItemByBarcodeId(
 				title: data.title,
 				quantityType: data.quantityType,
 				quantity: 1,
-				price: data.price,
-				totalPrice: data.totalPrice,
+				price: data.amount,
+				totalPrice: data.amount * 1,
 				discount: 0,
 				taxable: false,
 				listUnitItem: data.unitList,

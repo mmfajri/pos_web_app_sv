@@ -54,7 +54,7 @@
       title: item.title,
       quantityType: item.quantityType,
       quantity: item.quantity,
-      price: item.price,
+      amount: item.price,
       totalPrice: item.totalPrice,
       unitList: item.listUnitItem?.toString() ?? null,
     }));
