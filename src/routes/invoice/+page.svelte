@@ -56,7 +56,7 @@
       quantity: item.quantity,
       amount: item.price,
       totalPrice: item.totalPrice,
-      unitList: item.listUnitItem?.toString() ?? null,
+      unitList: item.listUnitItem ? JSON.stringify(item.listUnitItem) : null,
     }));
     // Convert from TransactionItem to TransactionItemApiModel
 
