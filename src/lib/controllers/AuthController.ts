@@ -1,5 +1,6 @@
 import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
 import type { ApiResponse } from "$lib/utils/ApiResponse";
+import { MESSAGE } from "$lib/utils/const_variable"
 
 export interface LoginRequest {
 	username: string;
@@ -37,7 +38,9 @@ export async function login(credentials: LoginRequest): Promise<ApiResponse<Auth
 		return result;
 	} catch (error) {
 		if (error instanceof Error) {
-			throw error;
+			// WARN: ADD LOG ERROR NEXT
+			// throw error;
+			throw new Error(MESSAGE.ERROR_SYSTEM)
 		}
 		throw new Error("An unexpected error occurred during login");
 	}

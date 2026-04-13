@@ -85,10 +85,12 @@
     if (readonly || disabled) {
       // Prevent any changes when readonly
       event.preventDefault();
-      searchTerm = value; // Reset to original value
       return;
     }
 
+    const target = event.target as HTMLInputElement;
+    searchTerm = target.value;  // Get value directly from event
+    
     internalUpdate = true;
     value = searchTerm;
     showDropdown = true;
@@ -167,7 +169,7 @@
     <input
       bind:this={inputElement}
       type="text"
-      bind:value={searchTerm}
+      value={searchTerm}
       on:input={handleInput}
       on:keydown={handleKeyDown}
       on:focus={handleFocus}

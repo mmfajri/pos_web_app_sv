@@ -68,18 +68,11 @@
 
   // Load products with pagination
   async function fetchProducts() {
-    console.log("[fetchProducts] START - tableLoading = true");
+    //console.log("[fetchProducts] START - tableLoading = true");
     tableLoading = true;
     error = null;
 
     try {
-      console.log("[fetchProducts] API params:", {
-        sortColumn,
-        sortColumnDir,
-        rowsPerPage,
-        pageNumber: currentPage,
-      });
-
       const response = await getAllProductsPaginated({
         sortColumn,
         sortColumnDir,
@@ -88,27 +81,15 @@
         barcodeID: searchBarcodeID || undefined,
       });
 
-      console.log("[fetchProducts] API response:", response);
-      console.log("[fetchProducts] response.data:", response.data);
-      console.log("[fetchProducts] response.data type:", typeof response.data, Array.isArray(response.data));
-
       products = response.data;
       totalRecords = response.totalRecords;
       currentPage = response.currentPage;
-
-      console.log("[fetchProducts] Products assigned:", products);
-      console.log("[fetchProducts] Products length:", products.length);
-      console.log("[fetchProducts] totalRecords:", totalRecords);
-      console.log("[fetchProducts] currentPage:", currentPage);
     } catch (err: unknown) {
       error = "Failed to load products. Please try again.";
-      console.error("[fetchProducts] ERROR:", err);
       products = [];
       totalRecords = 0;
     } finally {
-      console.log("[fetchProducts] FINALLY - tableLoading = false");
       tableLoading = false;
-      console.log("[fetchProducts] END - tableLoading is now:", tableLoading);
     }
   }
 
@@ -127,14 +108,14 @@
 
   // Handle table params change (pagination, sorting)
   function handleTableParamsChange(event: CustomEvent<DataTableParams>) {
-    console.log("[handleTableParamsChange] Event received:", event.detail);
+    //console.log("[handleTableParamsChange] Event received:", event.detail);
     const params = event.detail;
     sortColumn = params.sortColumn;
     sortColumnDir = params.sortColumnDir;
     rowsPerPage = params.rowsPerPage;
     currentPage = params.pageNumber;
 
-    console.log("[handleTableParamsChange] Calling fetchProducts");
+    //console.log("[handleTableParamsChange] Calling fetchProducts");
     fetchProducts();
   }
 

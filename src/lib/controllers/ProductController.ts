@@ -53,6 +53,7 @@ export async function getAllProductDropdown(): Promise<ProductModelDropdown[]> {
 
 export async function getProductByBarcodeDropdown(barcodeId: string): Promise<ProductModelDropdown | null> {
 	try {
+
 		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PRODUCT}/GetProductByBarcodeIdDropdown?barcodeId=${encodeURIComponent(barcodeId)}`, {
 			method: "GET",
 			headers: {
@@ -232,7 +233,16 @@ export async function getAllProductsPaginated(
 		const response = await fetch(url);
 
 		if (!response.ok) {
-			throw new Error(`Failed to fetch products: ${response.status}`);
+			if (response.status === API_STATUS_CODE.NOT_FOUND) {
+				return {
+					data: [],
+					totalRecords: 0,
+					currentPage: 1,
+					totalPages: 0,
+				};
+			} else {
+				throw new Error(`Failed to fetch products: ${response.status}`);
+			}
 		}
 
 		const apiResponse: ApiResponse<BackendPaginatedResponse> = await response.json();

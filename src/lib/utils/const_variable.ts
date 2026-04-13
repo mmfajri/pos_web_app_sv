@@ -17,5 +17,9 @@ export const API_STATUS_CODE = {
 	BAD_REQUEST: 504,
 }
 
+export const MESSAGE = {
+	ERROR_SYSTEM: "Error System Occured",
+}
+
 
 
