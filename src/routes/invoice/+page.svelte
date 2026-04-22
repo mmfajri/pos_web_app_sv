@@ -2,15 +2,12 @@
   import type { TransactionItem } from "$lib/models/TransactionItems";
   import { logout } from "$lib/utils/logout";
   import Navbar from "$lib/components/Navbar.svelte";
-  import { addItemByCode, getSubtotal, removeItem, updateQuantity } from "$lib/controllers/InvoiceController";
+  import { addItemByCode, getSubtotal, removeItem, updateQuantity, saveInvoiceTransaction } from "$lib/controllers/InvoiceController";
 
-  let invoiceDate = $state(new Date());
+  let invoiceDate = $state(new Date().toISOString().split('T')[0]);
   let codeInput = $state("");
-
-  // const products: Product[] = [
-  //   { code: "A123", description: "Mousepad", price: 8.99, category: "OFF", product_name: "Razor MousePad" },
-  //   { code: "B456", description: "Pen", price: 0.99, category: "PENS", product_name: "2B Exam Pencil" },
-  // ];
+  let saving = $state(false);
+  let errorMsg = $state("");
 
   let items = $state<TransactionItem[]>([]);
 
@@ -33,6 +30,29 @@
   function handleRemove(index: number) {
     items = removeItem(items, index);
   }
+
+  async function handleSave() {
+    if (items.length === 0) {
+      alert("Add at least one item before saving.");
+      return;
+    }
+    saving = true;
+    errorMsg = "";
+    try {
+      const result = await saveInvoiceTransaction(items, new Date(invoiceDate));
+      if (result.statusCode === 200) {
+        alert("Invoice saved successfully!");
+        items = [];
+        codeInput = "";
+      } else {
+        errorMsg = result.message ?? "Failed to save invoice.";
+      }
+    } catch (e) {
+      errorMsg = "An unexpected error occurred.";
+    } finally {
+      saving = false;
+    }
+  }
 </script>
 
 <Navbar onLogout={logout}></Navbar>
@@ -45,7 +65,7 @@
         <div class="mt-2 grid grid-cols-2 gap-4 text-sm">
           <div>
             <label for="date-invoice" class="font-medium">Date :</label>
-            <input type="date" bind:value={invoiceDate} class="border rounded px-2 py-1 mt-1" readonly />
+            <input type="date" bind:value={invoiceDate} class="border rounded px-2 py-1 mt-1" />
           </div>
         </div>
       </div>
@@ -111,8 +131,20 @@
 
   <!-- Footer -->
   <footer class="bg-gray-100 border-t border-gray-300 p-4 shadow-inner sticky bottom-0 z-10">
-    <div class="flex justify-end space-x-8 text-right">
+    <div class="flex justify-between items-end">
       <div>
+        {#if errorMsg}
+          <p class="text-red-600 text-sm">{errorMsg}</p>
+        {/if}
+        <button
+          onclick={handleSave}
+          disabled={saving}
+          class="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Invoice'}
+        </button>
+      </div>
+      <div class="text-right space-y-1">
         <div>
           Subtotal : <strong>${subtotal()}</strong>
         </div>

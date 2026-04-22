@@ -108,14 +108,12 @@
 
   // Handle table params change (pagination, sorting)
   function handleTableParamsChange(event: CustomEvent<DataTableParams>) {
-    //console.log("[handleTableParamsChange] Event received:", event.detail);
     const params = event.detail;
     sortColumn = params.sortColumn;
     sortColumnDir = params.sortColumnDir;
     rowsPerPage = params.rowsPerPage;
     currentPage = params.pageNumber;
 
-    //console.log("[handleTableParamsChange] Calling fetchProducts");
     fetchProducts();
   }
 
@@ -394,9 +392,9 @@
       </form>
     </div>
 
-    <!-- Right Section - Product List with DataTable -->
+    <!-- Right Section - Price List with DataTable -->
     <div class="flex-1">
-      <h2 class="text-2xl font-semibold mb-4">Product List</h2>
+      <h2 class="text-2xl font-semibold mb-4">Price List</h2>
 
       <!-- Search Bar -->
       <div class="mb-4 flex gap-2">

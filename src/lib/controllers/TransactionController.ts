@@ -83,7 +83,7 @@ export async function getTransactionsPaginated(
 export async function getTransactionDetail(
 	transactionId: number
 ): Promise<TransactionItemApiDetail[]> {
-	const url = `${API_BASE_URL}${API_ENDPOINTS.TRANSACTION}/${transactionId}?req=${transactionId}`;
+	const url = `${API_BASE_URL}${API_ENDPOINTS.TRANSACTION}/Detail?req=${transactionId}`;
 	const response = await fetch(url);
 
 	if (!response.ok) {

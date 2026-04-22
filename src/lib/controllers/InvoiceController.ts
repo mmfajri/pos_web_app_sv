@@ -4,7 +4,6 @@ import { API_BASE_URL, API_ENDPOINTS } from "$lib/utils/const_variable";
 
 export async function addItemByCode(transactionItems: TransactionItem[], barcodeId: string, unit?: string): Promise<TransactionItem[] | null> {
 	try {
-		debugger;
 		// Calling Api
 		let url = `${API_BASE_URL}${API_ENDPOINTS.INVOICE}/GetProductPriceByBarcode?BarcodeId=${encodeURIComponent(barcodeId)}`
 		if (unit !== undefined) {
@@ -62,4 +61,37 @@ export function removeItem(transactionItem: TransactionItem[], index: number): T
 
 export function getSubtotal(items: TransactionItem[]): number {
 	return parseFloat(items.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2))
+}
+
+export async function saveInvoiceTransaction(
+	items: TransactionItem[],
+	transactionDate: Date
+): Promise<ApiResponse<boolean>> {
+	const totalTransaction = getSubtotal(items);
+
+	const body = {
+		transactionDate: transactionDate.toISOString(),
+		accountPos: null,
+		totalTransaction,
+		payAmount: totalTransaction,
+		listTransactionItems: items.map((item) => ({
+			barcodeId: item.barcodeId,
+			title: item.title,
+			quantityType: item.quantityType,
+			quantity: item.quantity,
+			price: item.price,
+			totalPrice: item.totalPrice,
+			unitList: item.listUnit.map((u) => u.name).join(';')
+		}))
+	};
+
+	const url = `${API_BASE_URL}${API_ENDPOINTS.INVOICE}/SaveInvoiceTransaction`;
+	const response = await fetch(url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(body)
+	});
+
+	const result: ApiResponse<boolean> = await response.json();
+	return result;
 }
